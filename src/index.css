@@ -1,0 +1,328 @@
+@import "@fontsource/instrument-serif/400.css";
+@import "@fontsource/jetbrains-mono/800.css";
+
+:root {
+  --bottom-panel-height: 280px;
+  --header-height: 56px;
+  --color-orange-400: #d47534;
+  --color-orange-500: #b85c2a;
+  --color-orange-600: #96461d;
+  --color-orange-950: #221005;
+}
+
+.no-transition, .no-transition *, .no-transition *::before, .no-transition *::after { transition: none !important; }
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: currentColor;
+}
+
+button, input, optgroup, select, textarea {
+  font-family: inherit;
+  font-size: 100%;
+  font-weight: inherit;
+  line-height: inherit;
+}
+
+button, select {
+  text-transform: none;
+}
+
+button, [type="button"], [type="reset"], [type="submit"] {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+img, svg, video, canvas, audio, iframe, embed, object {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+ul, ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+h1, h2, h3, h4, h5, h6, p {
+  margin: 0;
+}
+
+[class*="backdrop-blur-"] {
+  -webkit-backdrop-filter: var(--un-backdrop-blur);
+}
+[class*="backdrop-blur-"]::before,
+[class*="backdrop-blur-"]::after {
+  -webkit-backdrop-filter: var(--un-backdrop-blur);
+}
+
+@layer base {
+  html {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  #root {
+    height: 100%;
+    width: 100%;
+  }
+
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  *:focus {
+    outline: 2px solid var(--color-orange-500);
+    outline-offset: 2px;
+  }
+  *:focus:not(:focus-visible) {
+    outline: none;
+  }
+  *:focus-visible {
+    outline: 2px solid var(--color-orange-500);
+    outline-offset: 2px;
+  }
+
+  select {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+}
+
+/* Chromium renders font-weight: 500 on buttons bolder than Firefox
+   Targeting only <button> because the rendering difference is specific to
+   how Chromium renders button-appearance-text vs regular text at medium weight.
+   font-weight: 400 (regular/normal) matches Firefox's rendering of 500 (medium). */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  button.font-medium {
+    font-weight: 400;
+  }
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--color-orange-500) calc(var(--pct) + 7px), rgba(64, 64, 64, 0.5) calc(var(--pct) + 7px));
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 14px;
+  width: 14px;
+  margin-top: -5px;
+  border-radius: 50%;
+  background: var(--color-orange-500);
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+input[type="range"]:hover::-webkit-slider-thumb {
+  transform: scale(1.15);
+  box-shadow: 0 0 12px rgba(184, 92, 42, 0.35);
+}
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 12px rgba(184, 92, 42, 0.35);
+}
+input[type="range"]::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(64, 64, 64, 0.5);
+}
+input[type="range"]::-moz-range-progress {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--color-orange-500);
+}
+input[type="range"]::-moz-range-thumb {
+  height: 14px;
+  width: 14px;
+  border-radius: 50%;
+  background: var(--color-orange-500);
+  border: 0;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+input[type="range"]:hover::-moz-range-thumb {
+  transform: scale(1.15);
+  box-shadow: 0 0 12px rgba(184, 92, 42, 0.35);
+}
+input[type="range"]::-moz-range-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 12px rgba(184, 92, 42, 0.35);
+}
+input[type="range"]:focus-visible {
+  outline: none;
+}
+input[type="range"]:disabled {
+  opacity: 0.35;
+}
+input[type="range"]:disabled::-webkit-slider-thumb {
+  background: #404040;
+  border-color: #404040;
+  cursor: not-allowed;
+}
+input[type="range"]:disabled::-moz-range-thumb {
+  background: #404040;
+  border-color: #404040;
+  cursor: not-allowed;
+}
+
+@layer utilities {
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #444;
+    border-radius: 20px;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .custom-scrollbar.show-scrollbar::-webkit-scrollbar-thumb {
+    opacity: 1;
+  }
+  .custom-scrollbar.show-scrollbar {
+    scrollbar-color: #444 transparent;
+  }
+
+  @keyframes reveal-up {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .reveal {
+    animation: reveal-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes hero-in {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .hero-entrance {
+    animation: hero-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .hero-delay-1 { animation-delay: 0.1s; opacity: 0; }
+  .hero-delay-2 { animation-delay: 0.2s; opacity: 0; }
+  .stagger-1 { animation-delay: 0.1s; }
+  .stagger-2 { animation-delay: 0.2s; }
+  .stagger-3 { animation-delay: 0.3s; }
+
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fade-in {
+    animation: fade-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes drop-in {
+    from { opacity: 0; transform: translateY(8px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .animate-drop-in {
+    animation: drop-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes slide-down {
+    from { opacity: 0; transform: translateY(-16px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .animate-slide-down {
+    animation: slide-down 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes spectra-spin {
+    to { transform: rotate(360deg); }
+  }
+  .animate-spectra-spin {
+    animation: spectra-spin 0.7s linear infinite;
+  }
+
+}
+
+.grain-overlay-fixed {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  background-image: var(--grain-url);
+  background-repeat: repeat;
+  background-size: 256px 256px;
+  opacity: 0.05;
+  mix-blend-mode: screen;
+  animation: grain-shift 12s steps(10) infinite;
+  transition: opacity 0.7s ease;
+}
+.grain-overlay-fixed[data-active="true"] {
+  opacity: 0.14;
+}
+
+.grain-bg {
+  position: relative;
+}
+.grain-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image: var(--grain-url);
+  background-repeat: repeat;
+  background-size: 256px 256px;
+  opacity: 0.05;
+  mix-blend-mode: screen;
+  animation: grain-shift 12s steps(10) infinite;
+}
+
+@keyframes grain-shift {
+  0%, 100% { background-position: 0% 0%; }
+  10% { background-position: -5% -10%; }
+  20% { background-position: -10% 5%; }
+  30% { background-position: 7% -15%; }
+  40% { background-position: 12% 15%; }
+  50% { background-position: -15% 8%; }
+  60% { background-position: 8% -5%; }
+  70% { background-position: -3% 12%; }
+  80% { background-position: 15% 20%; }
+  90% { background-position: -8% 6%; }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+*, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .reveal, .revealed, .hero-entrance {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+  }
+}

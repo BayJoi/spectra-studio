@@ -1,0 +1,136 @@
+Spectra Studio - Third-Party Licenses
+======================================
+
+This project uses the following third-party packages and assets.
+All licenses are permissive and compatible with the GNU General Public License v3.0.
+
+
+RUNTIME DEPENDENCIES
+--------------------
+
+react 19.1.0
+  License: MIT
+  Copyright: Copyright (c) Meta Platforms, Inc. and affiliates.
+
+react-dom 19.1.0
+  License: MIT
+  Copyright: Copyright (c) Meta Platforms, Inc. and affiliates.
+
+jotai 2.12.3
+  License: MIT
+  Copyright: Copyright (c) 2020 Poimandres
+
+gl-matrix 3.4.3
+  License: MIT
+  Copyright: Copyright (c) 2015-2025, Brandon Jones, Colin MacKenzie IV.
+
+stats-gl 2.0.0
+  License: MIT
+  Copyright: Copyright (c) Renaud Rohlinger
+
+
+DEV DEPENDENCIES
+----------------
+
+@eslint/js 10.x
+  License: MIT
+  Copyright: Copyright OpenJS Foundation and other contributors, https://www.openjsf.org
+
+@fontsource/instrument-serif 5.2.8
+  License: SIL Open Font License 1.1
+  Copyright: Copyright 2022 The Instrument Serif Project Authors
+  Source: https://github.com/Instrument/instrument-serif
+
+@fontsource/jetbrains-mono 5.2.8
+  License: SIL Open Font License 1.1
+  Copyright: Copyright 2020 The JetBrains Mono Project Authors
+  Source: https://github.com/JetBrains/JetBrainsMono
+
+@iconify-json/lucide 1.2.0
+  License: ISC
+  Copyright: Copyright (c) Lucide Contributors
+  Source: https://lucide.dev
+
+@types/node 25.x
+  License: MIT
+  Copyright: Copyright (c) Microsoft Corporation.
+
+@types/react 19.x
+  License: MIT
+  Copyright: Copyright (c) Microsoft Corporation.
+
+@types/react-dom 19.x
+  License: MIT
+  Copyright: Copyright (c) Microsoft Corporation.
+
+@unocss/preset-icons 66.x
+  License: MIT
+  Copyright: Copyright (c) 2021-PRESENT Anthony Fu
+
+@unocss/vite 66.x
+  License: MIT
+  Copyright: Copyright (c) 2021-PRESENT Anthony Fu
+
+@vitejs/plugin-react 5.x
+  License: MIT
+  Copyright: Copyright (c) 2019-present, Yuxi (Evan) You and Vite contributors
+
+eslint 10.x
+  License: MIT
+  Copyright: Copyright OpenJS Foundation and other contributors, https://www.openjsf.org
+
+eslint-plugin-react-hooks 7.x
+  License: MIT
+  Copyright: Copyright (c) Meta Platforms, Inc. and affiliates.
+
+eslint-plugin-react-refresh 0.5.x
+  License: MIT
+  Copyright: Copyright (c) Arnaud Barre
+
+typescript 5.9.x
+  License: Apache-2.0
+  Copyright: Copyright (c) Microsoft Corporation.
+
+typescript-eslint 8.x
+  License: MIT
+  Copyright: Copyright (c) 2019 typescript-eslint and other contributors
+
+unocss 66.x
+  License: MIT
+  Copyright: Copyright (c) 2021-PRESENT Anthony Fu
+
+vite 7.3.x
+  License: MIT
+  Copyright: Copyright (c) 2019-present, VoidZero Inc. and Vite contributors
+
+vite-plugin-glsl 1.3.x
+  License: MIT
+  Copyright: Copyright (c) 2022-2025 Ustym Ukhman
+
+
+EXTERNAL ASSETS
+---------------
+
+Radiant Shaders (landing page background shaders)
+  License: MIT
+  Copyright: Copyright (c) 2025 Paul Bakaus
+  Source: https://github.com/pbakaus/radiant
+  Website: https://radiant-shaders.com/
+  Shaders used:
+    - rain-on-glass.ts (from rain-on-glass.html)
+    - digital-rain.ts (from digital-rain.html)
+    - hologram-glitch.ts (from hologram-glitch.html)
+    - sequin-wave.ts (from sequin-wave.html)
+  Note: Attribution appreciated but not required per MIT license.
+
+Lucide Icons
+  License: ISC
+  Source: https://lucide.dev
+
+JetBrains Mono Font
+  License: SIL Open Font License 1.1
+  Source: https://www.jetbrains.com/lmono/
+
+Instrument Serif Font
+  License: SIL Open Font License 1.1
+  Source: https://fonts.google.com/specimen/Instrument+Serif
