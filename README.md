@@ -188,42 +188,62 @@ All `.bat` files are in the project root. Double-click to run.
 
 ```
 src/
-  App.tsx                    # Root app, lazy-loaded editor, splash management
-  main.tsx                   # Entry point
-  index.css                  # Global styles, animations, keyframes
-  env.d.ts                   # TypeScript declarations
+  App.tsx                         # Root app, lazy-loaded editor, splash management
+  main.tsx                        # Entry point
+  constants.ts                    # ASCII ramp, export formats, render scales
+  index.css                       # Global styles, animations, keyframes
+  env.d.ts                        # TypeScript declarations for GLSL imports
 
   components/
-    LandingPage.tsx          # Landing page with background shaders
-    EditorLayout.tsx         # Editor shell (header, keyboard shortcuts, export)
-    CanvasArea.tsx           # Canvas, WebGL engine mount, RAF loop, zoom/pan
-    BottomPanel.tsx          # Filter list, parameter sliders, presets, drag reorder
-    ErrorBoundary.tsx        # React error boundary
+    LandingPage.tsx               # Landing page with background shaders
+    EditorLayout.tsx              # Editor shell (header, export, drag-and-drop)
+    CanvasArea.tsx                # Canvas, WebGL engine mount, RAF loop, zoom/pan
+    BottomPanel.tsx               # Filter list, drag reorder, image upload
+    ErrorBoundary.tsx             # React error boundary
+    canvas/
+      ZoomControls.tsx            # Zoom in/out/reset overlay
+    filter-panel/
+      EffectBrowser.tsx           # Searchable effect dropdown
+      FilterCard.tsx              # Individual filter card with sliders
+      PresetBrowser.tsx           # Save/load/delete custom presets
 
   gl/
-    engine.ts                # EffectEngine — render loop, RT pool, draw calls
-    shader-library.ts        # Shader compilation, caching, progressive prewarm
-    webgl-utils.ts           # WebGL helpers (texture creation, quad geometry)
-    fontAtlas.ts             # Font atlas generation for ASCII filter
+    engine.ts                     # EffectEngine — render loop, RT pool, draw calls
+    shader-library.ts             # Shader compilation, caching, progressive prewarm
+    webgl-utils.ts                # WebGL helpers (texture creation, quad geometry)
+    fontAtlas.ts                  # Font atlas generation for ASCII filter
 
   shaders/
-    vertex.glsl              # Shared vertex shader
-    passthrough.glsl         # Passthrough fragment shader
-    header.glsl              # Shared GLSL header (noise functions, math)
-    *.glsl                   # Individual effect fragment shaders
+    vertex.glsl                   # Shared vertex shader
+    passthrough.glsl              # Passthrough fragment shader
+    header.glsl                   # Shared GLSL header (noise functions, math)
+    *.glsl                        # Individual effect fragment shaders
 
   filters/
-    filter-registry.ts       # Filter manifests (params, uniforms, categories)
+    filter-registry.ts            # Filter manifests (params, uniforms, categories)
 
   store/
-    atoms.ts                 # Jotai atoms (filters, selection, history, presets)
+    atoms.ts                      # Re-exports from index.ts
+    index.ts                      # Central export barrel for all atoms
+    types.ts                      # FilterData, FilterType, CustomPreset, uuid
+    core-atoms.ts                 # Base atoms (filters, selection, history, imageUrl)
+    filter-actions.ts             # Add/remove/toggle/reorder/lock filters
+    history.ts                    # Undo/redo atoms
+    presets.ts                    # Custom preset save/load/delete
+    export-atoms.ts               # Export trigger, format, file handle
+    ui-atoms.ts                   # Effect browser, preset browser, render scale
+    reset.ts                      # Full editor reset
+    url-hash.ts                   # Encode/decode filter state to URL hash
+
+  hooks/
+    useEditorKeyboardShortcuts.ts # All keyboard shortcut handlers
 
   utils/
-    grain.ts                 # Film grain overlay
-    rain-on-glass.ts         # Landing page shader
-    digital-rain.ts          # Landing page shader
-    hologram-glitch.ts       # Landing page shader
-    sequin-wave.ts           # Landing page shader
+    grain.ts                      # Film grain overlay
+    rain-on-glass.ts              # Landing page background shader
+    digital-rain.ts               # Landing page background shader
+    hologram-glitch.ts            # Landing page background shader
+    sequin-wave.ts                # Landing page background shader
 ```
 
 ### Rendering Pipeline
