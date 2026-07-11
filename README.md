@@ -32,9 +32,9 @@ This project would not exist without these:
 |---|------|------|
 | :sparkles: | **VoidMesh** — the original inspiration for this project | [GitHub](https://github.com/ogdakke/voidmesh) |
 | :art: | **Radiant Shaders** — landing page background shaders (MIT, Paul Bakaus) | [radiant-shaders.com](https://radiant-shaders.com/) / [GitHub](https://github.com/pbakaus/radiant) |
-| :font: | **JetBrains Mono** — monospace font used throughout | [jetbrains.com](https://www.jetbrains.com/lmono/) |
-| :font: | **Instrument Serif** — serif font for the landing page | [Google Fonts](https://fonts.google.com/specimen/Instrument+Serif) |
-| :icon: | **Lucide** — icon set | [lucide.dev](https://lucide.dev/) |
+| 🔤 | **JetBrains Mono** — monospace font used throughout | [jetbrains.com](https://www.jetbrains.com/lmono/) |
+| 🔤 | **Instrument Serif** — serif font for the landing page | [Google Fonts](https://fonts.google.com/specimen/Instrument+Serif) |
+| 🎨 | **Lucide** — icon set | [lucide.dev](https://lucide.dev/) |
 | :robot: | **Built with AI** — every file, every shader, every component was generated through conversations with AI. I am not a developer and I do not know how to code. |
 
 ---
@@ -64,8 +64,8 @@ The entire application runs in the browser. There is no backend, no Electron wra
 | Chromatic Aberration | Distortion | - |
 | Outline | Stylized | - |
 | Radial Blur | Distortion | - |
-| Holo Glitch | Distortion | Yes |
-| Fluid | Distortion | Yes |
+| Holo Glitch | Distortion | - |
+| Fluid | Distortion | - |
 | Kaleidoscope | Stylized | - |
 | Halftone (Beta) | Stylized | - |
 | Halftone (Beta 2) | Stylized | - |
