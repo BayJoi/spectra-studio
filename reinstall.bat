@@ -4,7 +4,7 @@ setlocal enabledelayedexpansion
 echo.
 echo === Spectra Studio Reinstall ===
 echo.
-echo This will delete node_modules and dist, then reinstall from scratch.
+echo This will delete node_modules, dist, .vite, and bun.lock, then reinstall.
 echo.
 set /p confirm="Continue? (y/N): "
 if /i not "!confirm!"=="y" (
@@ -35,6 +35,13 @@ if exist .vite (
 ) else ( echo [--] .vite cache not found )
 
 echo.
+echo --- Removing bun.lock ---
+if exist bun.lock (
+  del /f /q bun.lock
+  echo [OK] bun.lock removed
+) else ( echo [--] bun.lock not found )
+
+echo.
 echo --- bun install ---
 call bun install
 if !errorlevel! neq 0 (
@@ -43,16 +50,6 @@ if !errorlevel! neq 0 (
   exit /b !errorlevel!
 )
 echo [OK] Install complete
-
-echo.
-echo --- Build ---
-call bun run build
-if !errorlevel! neq 0 (
-  echo [FAILED] Build
-  timeout /t 2 >nul
-  exit /b !errorlevel!
-)
-echo [OK] Build passed
 
 echo.
 echo Clean reinstall complete.
