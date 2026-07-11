@@ -2,6 +2,8 @@
 
 # Spectra Studio
 
+<img width="1920" height="1040" alt="zen_nfVDgKsFfz" src="https://github.com/user-attachments/assets/e44bee14-554e-462d-b6a3-e1fff23b0cbb" />
+
 **A browser-based GPU image effects editor built entirely with WebGL2.**
 
 No server. No upload. No accounts. No internet required. Just you and your GPU.
