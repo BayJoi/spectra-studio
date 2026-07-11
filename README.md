@@ -97,10 +97,12 @@ The entire application runs in the browser. There is no backend, no Electron wra
 
 1. Install [Bun](https://bun.sh)
 2. Clone the repo and open the folder:
+
    ```
    git clone https://github.com/BayJoi/spectra-studio.git
    cd spectra-studio
    ```
+   
 3. Double-click `setup.bat` — this installs everything and builds the app
 4. Double-click `start.bat` — the app opens in your browser at `http://localhost:5173`
 
@@ -110,18 +112,24 @@ That's it.
 
 1. Install [Bun](https://bun.sh)
 2. Clone the repo:
+
    ```
    git clone https://github.com/BayJoi/spectra-studio.git
    cd spectra-studio
    ```
+   
 3. Install dependencies:
+
    ```
    bun install
    ```
+   
 4. Start the app:
+
    ```
    bun run dev
    ```
+   
 5. Open `http://localhost:5173` in your browser
 
 ### Production Build
@@ -131,6 +139,7 @@ bun run build
 ```
 
 Output is written to the `dist/` directory. To preview it locally:
+
 ```
 bun run preview
 ```
