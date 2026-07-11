@@ -55,6 +55,8 @@ The entire application runs in the browser. There is no backend, no Electron wra
 
 ### 16 GPU-Accelerated Effects
 
+<img width="1200" height="610" alt="zen_9yzFL12w4W" src="https://github.com/user-attachments/assets/12af8eab-04c2-41cb-992d-4828db791828" />
+
 | Effect | Category | Animated |
 |--------|----------|----------|
 | Noise | Basic | - |
