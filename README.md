@@ -116,7 +116,7 @@ To save a preset: configure your filters, click the preset dropdown in the botto
 1. Install [Bun](https://bun.sh)
 2. Clone the repo and open the folder:
    ```
-   git clone https://github.com/your-username/spectra-studio.git
+   git clone https://github.com/BayJoi/spectra-studio.git
    cd spectra-studio
    ```
 3. Double-click `setup.bat` — this installs everything and builds the app
@@ -129,7 +129,7 @@ That's it.
 1. Install [Bun](https://bun.sh)
 2. Clone the repo:
    ```
-   git clone https://github.com/your-username/spectra-studio.git
+   git clone https://github.com/BayJoi/spectra-studio.git
    cd spectra-studio
    ```
 3. Install dependencies:
