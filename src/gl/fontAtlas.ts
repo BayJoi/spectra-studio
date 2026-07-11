@@ -1,5 +1,4 @@
-const ATLAS_RAMP = ' .:-=+*#%@';
-const ATLAS_EDGE = '-/|\\';
+import { ASCII_RAMP, ASCII_EDGE_GLYPHS } from '../constants';
 
 export interface FontAtlas {
   texture: WebGLTexture;
@@ -44,24 +43,17 @@ async function loadFontAndRender(gl: WebGL2RenderingContext, chars: string, cell
       document.fonts.load(`800 ${Math.floor(cellPx * 0.85)}px "JetBrains Mono"`),
       new Promise((_, reject) => setTimeout(() => reject(new Error('font timeout')), 2000)),
     ]);
-  } catch { /* font load timeout is OK — proceed with fallback */ }
+  } catch (e) {
+    console.warn('[FontAtlas] Font load failed, using fallback:', e);
+  }
   const canvas = renderChars(chars, cellPx);
   const texture = uploadTexture(gl, canvas);
   return { texture, numChars: chars.length };
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- part of ASCII art system, used by FilterData.customCharset
-async function createCustomFontAtlas(
-  gl: WebGL2RenderingContext,
-  charset: string,
-  cellPx = 48,
-): Promise<FontAtlas> {
-  return loadFontAndRender(gl, charset.slice(0, 128) + ATLAS_EDGE, cellPx);
 }
 
 export async function createFontAtlasAsync(
   gl: WebGL2RenderingContext,
   cellPx = 48,
 ): Promise<FontAtlas> {
-  return loadFontAndRender(gl, ATLAS_RAMP + ATLAS_EDGE, cellPx);
+  return loadFontAndRender(gl, ASCII_RAMP + ASCII_EDGE_GLYPHS, cellPx);
 }

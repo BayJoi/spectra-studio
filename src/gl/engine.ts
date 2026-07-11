@@ -15,9 +15,9 @@ interface RenderTarget {
 }
 
 export class EffectEngine {
-  private gl: WebGL2RenderingContext;
+  private gl!: WebGL2RenderingContext;
   private canvas: HTMLCanvasElement;
-  private shaders: ShaderLibrary;
+  private shaders!: ShaderLibrary;
 
   private quadVAO: WebGLVertexArrayObject | null = null;
   private quadBuffer: WebGLBuffer | null = null;
@@ -27,8 +27,11 @@ export class EffectEngine {
 
   private sourceTexture: WebGLTexture | null = null;
   private sourceImage: HTMLImageElement | null = null;
+  private fullWidth = 0;
+  private fullHeight = 0;
   private width = 0;
   private height = 0;
+  private _renderScale = 1.0;
 
   private targetA: RenderTarget | null = null;
   private targetB: RenderTarget | null = null;
@@ -36,21 +39,68 @@ export class EffectEngine {
   private extraTargetIndex = 0;
 
   private _disposed = false;
-  private _currentCharset = '';
   private _hidden = false;
   private _rendering = false;
   private _lastViewW = 0;
   private _lastViewH = 0;
-  private _rtFormat: number;
+  private _rtFormat!: number;
   private _uniformCache = new Map<WebGLProgram, Map<string, WebGLUniformLocation | null>>();
   private _onContextLost: ((e: Event) => void) | null = null;
   private _onContextRestored: (() => void) | null = null;
 
   set hidden(v: boolean) { this._hidden = v; }
 
+  setRenderScale(scale: number) {
+    if (scale === this._renderScale || this._disposed) return;
+    this._renderScale = scale;
+    if (this.fullWidth > 0 && this.fullHeight > 0) {
+      this._applyRenderScale();
+    }
+  }
+
+  private _applyRenderScale() {
+    const gl = this.gl;
+    if (gl.isContextLost()) return;
+
+    this.width = Math.max(1, Math.round(this.fullWidth * this._renderScale));
+    this.height = Math.max(1, Math.round(this.fullHeight * this._renderScale));
+
+    this.canvas.width = this.fullWidth;
+    this.canvas.height = this.fullHeight;
+
+    this._disposeRT(this.targetA); this.targetA = null;
+    this._disposeRT(this.targetB); this.targetB = null;
+    this.extraTargets.forEach(rt => this._disposeRT(rt));
+    this.extraTargets = [];
+    this.targetA = this._makeRT(this.width, this.height);
+    this.targetB = this._makeRT(this.width, this.height);
+
+    if (this.sourceImage && this._renderScale < 1.0) {
+      const offscreen = new OffscreenCanvas(this.width, this.height);
+      const ctx = offscreen.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(this.sourceImage, 0, 0, this.width, this.height);
+        if (this.sourceTexture) { gl.deleteTexture(this.sourceTexture); this.sourceTexture = null; }
+        this.sourceTexture = createUploadTexture(gl, offscreen, true);
+      }
+    } else if (this.sourceImage) {
+      if (this.sourceTexture) { gl.deleteTexture(this.sourceTexture); this.sourceTexture = null; }
+      this.sourceTexture = createUploadTexture(gl, this.sourceImage, true);
+    }
+  }
+
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
-    const gl = canvas.getContext('webgl2', {
+    this._initGL();
+
+    this._onContextLost = (e: Event) => e.preventDefault();
+    this._onContextRestored = () => this._handleContextRestored();
+    canvas.addEventListener('webglcontextlost', this._onContextLost);
+    canvas.addEventListener('webglcontextrestored', this._onContextRestored);
+  }
+
+  private _initGL() {
+    const gl = this.canvas.getContext('webgl2', {
       alpha: true,
       antialias: false,
       premultipliedAlpha: false,
@@ -66,52 +116,32 @@ export class EffectEngine {
     const floatExt = gl.getExtension('EXT_color_buffer_float');
     this._rtFormat = floatExt ? gl.RGBA16F : gl.RGBA8;
     gl.getExtension('OES_texture_half_float_linear');
+
+    this.shaders?.dispose();
     this.shaders = new ShaderLibrary(gl);
     queueMicrotask(() => { if (!this._disposed) this.shaders.prewarm(); });
+    this._uniformCache.clear();
+
     const { vao, buffer } = createFullscreenQuad(gl);
     if (!vao || !buffer) throw new Error('Failed to create fullscreen quad');
     this.quadVAO = vao;
     this.quadBuffer = buffer;
-
-    this._onContextLost = (e: Event) => e.preventDefault();
-    this._onContextRestored = () => this._handleContextRestored();
-    canvas.addEventListener('webglcontextlost', this._onContextLost);
-    canvas.addEventListener('webglcontextrestored', this._onContextRestored);
   }
 
   private _handleContextRestored() {
     if (this._disposed) return;
-    const gl = this.canvas.getContext('webgl2', {
-      alpha: true,
-      antialias: false,
-      premultipliedAlpha: false,
-      preserveDrawingBuffer: false,
-      powerPreference: 'high-performance',
-    }) as WebGL2RenderingContext | null;
-    if (!gl) return;
-    this.gl = gl;
-    gl.disable(gl.DEPTH_TEST);
-    gl.disable(gl.CULL_FACE);
+    try {
+      this._initGL();
+    } catch {
+      return;
+    }
 
-    const floatExt = gl.getExtension('EXT_color_buffer_float');
-    this._rtFormat = floatExt ? gl.RGBA16F : gl.RGBA8;
-    gl.getExtension('OES_texture_half_float_linear');
-
-    this.shaders.dispose();
-    this.shaders = new ShaderLibrary(gl);
-    queueMicrotask(() => { if (!this._disposed) this.shaders.prewarm(); });
-    this._uniformCache.clear();
-    const { vao, buffer } = createFullscreenQuad(gl);
-    if (!vao || !buffer) return;
-    this.quadVAO = vao;
-    this.quadBuffer = buffer;
     this.sourceTexture = null;
     this.fontAtlas = null;
     this.fontAtlasPromise = null;
     this.targetA = null;
     this.targetB = null;
     this.extraTargets = [];
-    this._currentCharset = '';
 
     if (this.sourceImage) {
       this.loadImage(this.sourceImage.src);
@@ -155,12 +185,15 @@ export class EffectEngine {
       uploadSource = offscreen;
     }
 
-    this.width = width;
-    this.height = height;
+    this.fullWidth = width;
+    this.fullHeight = height;
 
-    this.canvas.width = width;
-    this.canvas.height = height;
-    gl.viewport(0, 0, width, height);
+    this.width = Math.max(1, Math.round(width * this._renderScale));
+    this.height = Math.max(1, Math.round(height * this._renderScale));
+
+    this.canvas.width = this.fullWidth;
+    this.canvas.height = this.fullHeight;
+    gl.viewport(0, 0, this.fullWidth, this.fullHeight);
 
     if (this.sourceTexture) { gl.deleteTexture(this.sourceTexture); this.sourceTexture = null; }
     this.sourceTexture = createUploadTexture(gl, uploadSource, true);
@@ -170,10 +203,10 @@ export class EffectEngine {
     this._disposeRT(this.targetB); this.targetB = null;
     this.extraTargets.forEach(rt => this._disposeRT(rt));
     this.extraTargets = [];
-    this.targetA = this._makeRT(width, height);
-    this.targetB = this._makeRT(width, height);
+    this.targetA = this._makeRT(this.width, this.height);
+    this.targetB = this._makeRT(this.width, this.height);
 
-    return { width, height };
+    return { width: this.width, height: this.height };
   }
 
   private _makeRT(w: number, h: number): RenderTarget {
@@ -273,6 +306,10 @@ export class EffectEngine {
 
     this.resetTargetPool();
 
+    const useIntermediate = this._renderScale < 1.0 && filters.length > 0;
+    const finalDest = useIntermediate ? this.allocTarget(1) : null;
+    const fullRes = useIntermediate ? [this.fullWidth, this.fullHeight] as [number, number] : undefined;
+
     if (filters.length === 0) {
       this._drawPass(this.shaders.getProgram('passthrough'), this.sourceTexture, null, 'passthrough', {}, this.width, this.height);
       this._rendering = false;
@@ -297,13 +334,12 @@ export class EffectEngine {
           this.fontAtlasPromise = createFontAtlasAsync(gl).then((atlas: FontAtlas | null) => {
             if (this._disposed) { this.fontAtlasPromise = null; return; }
             this.fontAtlas = atlas;
-            this._currentCharset = '';
             this.fontAtlasPromise = null;
             this._rendering = false;
             this.render(jotaiStore.get(filtersAtom));
           });
         }
-        this._drawPass(this.shaders.getProgram('passthrough'), readTexture, isLast ? null : writeTarget, 'passthrough', {}, this.width, this.height);
+        this._drawPass(this.shaders.getProgram('passthrough'), readTexture, isLast ? finalDest : writeTarget, 'passthrough', {}, this.width, this.height, undefined, undefined, undefined, isLast ? fullRes : undefined);
         if (!isLast) {
           readTexture = writeTarget.texture;
           [writeTarget, otherTarget] = [otherTarget, writeTarget];
@@ -321,7 +357,7 @@ export class EffectEngine {
           const h = Math.max(1, Math.round(this.height * scale));
 
           const isLastPass = pi === manifest.passes.length - 1;
-          const passDest = isLastPass && isLast ? null : this.allocTarget(scale);
+          const passDest = isLastPass && isLast ? finalDest : this.allocTarget(scale);
 
           const passKey = `${filter.type}:${passDef.shader}`;
           let program: WebGLProgram;
@@ -333,7 +369,8 @@ export class EffectEngine {
           }
 
           const baseTex = isLastPass ? originalInput : undefined;
-          this._drawPass(program, passRead, passDest, passKey, filter.params, w, h, filter.id, baseTex, manifest);
+          const passRes = isLastPass && isLast ? fullRes : undefined;
+          this._drawPass(program, passRead, passDest, passKey, filter.params, w, h, filter.id, baseTex, manifest, passRes);
 
           if (!isLastPass) {
             passRead = this.extraTargets[this.extraTargetIndex - 1]?.texture ?? passRead;
@@ -354,7 +391,7 @@ export class EffectEngine {
         program = this.shaders.getProgram('passthrough');
         passType = 'passthrough';
       }
-      this._drawPass(program, readTexture, isLast ? null : writeTarget, passType, filter.params, this.width, this.height, filter.id, undefined, manifest);
+      this._drawPass(program, readTexture, isLast ? finalDest : writeTarget, passType, filter.params, this.width, this.height, filter.id, undefined, manifest, isLast ? fullRes : undefined);
 
       if (!isLast) {
         readTexture = writeTarget.texture;
@@ -364,6 +401,10 @@ export class EffectEngine {
 
     if (!foundLast) {
       this._drawPass(this.shaders.getProgram('passthrough'), this.sourceTexture, null, 'passthrough', {}, this.width, this.height);
+    }
+
+    if (useIntermediate && finalDest && foundLast) {
+      this._drawPass(this.shaders.getProgram('passthrough'), finalDest.texture, null, 'passthrough', {}, this.fullWidth, this.fullHeight);
     }
 
     this._rendering = false;
@@ -381,18 +422,23 @@ export class EffectEngine {
     seedKey?: string,
     baseTexture?: WebGLTexture,
     manifest?: { uniforms: (params: Record<string, number>, ctx: { seed: number; fontAtlas: FontAtlas | null }) => Record<string, { kind: string; v: number | [number, number] }> },
+    resolution?: [number, number],
   ) {
     const gl = this.gl;
+
+    const isScreen = destination === null;
+    const viewW = isScreen ? this.fullWidth : width;
+    const viewH = isScreen ? this.fullHeight : height;
 
     if (destination) {
       gl.bindFramebuffer(gl.FRAMEBUFFER, destination.fbo);
     } else {
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     }
-    if (width !== this._lastViewW || height !== this._lastViewH) {
-      gl.viewport(0, 0, width, height);
-      this._lastViewW = width;
-      this._lastViewH = height;
+    if (viewW !== this._lastViewW || viewH !== this._lastViewH) {
+      gl.viewport(0, 0, viewW, viewH);
+      this._lastViewW = viewW;
+      this._lastViewH = viewH;
     }
 
     gl.bindVertexArray(this.quadVAO);
@@ -412,7 +458,9 @@ export class EffectEngine {
       gl.uniform1i(this._uniformLoc(program, 'u_bloomTex'), 1);
     }
 
-    gl.uniform2f(this._uniformLoc(program, 'u_resolution'), width, height);
+    const resW = resolution ? resolution[0] : width;
+    const resH = resolution ? resolution[1] : height;
+    gl.uniform2f(this._uniformLoc(program, 'u_resolution'), resW, resH);
 
     if (passType !== 'passthrough') {
       if (manifest) {
@@ -444,16 +492,32 @@ export class EffectEngine {
     if (this._rendering) {
       await new Promise<void>((resolve, reject) => {
         const start = Date.now();
-        const i = setInterval(() => {
-          if (!this._rendering) { clearInterval(i); resolve(); return; }
-          if (Date.now() - start > 10000) { clearInterval(i); reject(new Error('Export timed out')); }
-        }, 4);
+        const check = () => {
+          if (!this._rendering) { resolve(); return; }
+          if (Date.now() - start > 10000) { reject(new Error('Export timed out')); return; }
+          setTimeout(check, 16);
+        };
+        check();
       });
     }
+
+    const prevScale = this._renderScale;
+    if (prevScale !== 1.0) {
+      this._renderScale = 1.0;
+      this._applyRenderScale();
+    }
+
     if (filters) this.render(filters);
-    return new Promise((resolve) => {
-      this.canvas.toBlob((blob) => resolve(blob), mimeType, 0.95);
+    const blob = await new Promise<Blob | null>((resolve) => {
+      this.canvas.toBlob((b) => resolve(b), mimeType, 0.95);
     });
+
+    if (prevScale !== 1.0) {
+      this._renderScale = prevScale;
+      this._applyRenderScale();
+    }
+
+    return blob;
   }
 
   clear() {

@@ -25,6 +25,7 @@ const SHORTCUTS = [
   { key: "P", action: "Open preset browser" },
   { key: "L", action: "Lock/unlock selected effect" },
   { key: "Ctrl+L", action: "Lock/unlock all effects" },
+  { key: "R", action: "Cycle render scale" },
 ];
 
 type ShaderType = 'off' | 'digital-rain' | 'rain-on-glass' | 'hologram-glitch' | 'sequin-wave';

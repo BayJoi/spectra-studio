@@ -1,6 +1,7 @@
 import { useState, useEffect, Suspense, lazy, useCallback } from "react";
 import { LandingPage } from "./components/LandingPage";
 import { initGrain } from "./utils/grain";
+import { initFromUrlHash } from "./store/atoms";
 
 const LazyEditorLayout = lazy(() => import("./components/EditorLayout").then(m => ({ default: m.EditorLayout })));
 
@@ -40,6 +41,7 @@ export default function App() {
 
   useEffect(() => {
     initGrain();
+    initFromUrlHash();
     const root = document.getElementById('root');
     const splash = document.getElementById('splash');
     if (root) root.classList.add('ready');

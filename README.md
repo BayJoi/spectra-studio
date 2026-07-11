@@ -26,26 +26,9 @@ No server. No upload. No accounts. No internet required. Just you and your GPU.
 
 ---
 
-## Credits & Inspiration
-
-This project would not exist without these:
-
-| | Name | Link |
-|---|------|------|
-| :sparkles: | **VoidMesh** — the original inspiration for this project | [GitHub](https://github.com/ogdakke/voidmesh) |
-| :art: | **Radiant Shaders** — landing page background shaders (MIT, Paul Bakaus) | [radiant-shaders.com](https://radiant-shaders.com/) / [GitHub](https://github.com/pbakaus/radiant) |
-| 🔤 | **JetBrains Mono** — monospace font used throughout | [jetbrains.com](https://www.jetbrains.com/lmono/) |
-| 🔤 | **Instrument Serif** — serif font for the landing page | [Google Fonts](https://fonts.google.com/specimen/Instrument+Serif) |
-| 🎨 | **Lucide** — icon set | [lucide.dev](https://lucide.dev/) |
-| :robot: | **Built with AI** — every file, every shader, every component was generated through conversations with AI. I am not a developer and I do not know how to code. |
-
----
-
 ## About
 
 Spectra Studio is a client-side image processing tool that applies real-time GPU shaders to images directly in your browser. Every effect runs on your graphics card through raw WebGL2 — nothing leaves your machine.
-
-This project was created by someone with no programming background, using AI as the primary development tool. I found [VoidMesh](https://github.com/ogdakke/voidmesh) and wanted to build something like it that runs in the browser — so I did, using AI as the only tool.
 
 The entire application runs in the browser. There is no backend, no Electron wrapper, no WebAssembly, and no server-side processing. Your images never leave your device.
 
@@ -57,38 +40,40 @@ The entire application runs in the browser. There is no backend, no Electron wra
 
 <img width="1200" height="610" alt="zen_9yzFL12w4W" src="https://github.com/user-attachments/assets/12af8eab-04c2-41cb-992d-4828db791828" />
 
-| Effect | Category | Animated |
-|--------|----------|----------|
-| Noise | Basic | - |
-| Pixelate | Retro | - |
-| Glitch | Distortion | - |
-| Halftone | Stylized | - |
-| ASCII | Retro | - |
-| CRT Screen | Retro | - |
-| Chromatic Aberration | Distortion | - |
-| Outline | Stylized | - |
-| Radial Blur | Distortion | - |
-| Holo Glitch | Distortion | - |
-| Fluid | Distortion | - |
-| Kaleidoscope | Stylized | - |
-| Halftone (Beta) | Stylized | - |
-| Halftone (Beta 2) | Stylized | - |
-| Bloom | Stylized | - |
-| LED / Dot Matrix | Retro | - |
+| Effect | Category |
+|--------|----------|
+| Noise | Basic |
+| Pixelate | Retro |
+| Glitch | Distortion |
+| Halftone | Stylized |
+| ASCII | Retro |
+| CRT Screen | Retro |
+| Chromatic Aberration | Distortion |
+| Outline | Stylized |
+| Radial Blur | Distortion |
+| Holo Glitch | Distortion |
+| Fluid | Distortion |
+| Kaleidoscope | Stylized |
+| Halftone (Beta) | Stylized |
+| Halftone (Beta 2) | Stylized |
+| Bloom | Stylized |
+| LED / Dot Matrix | Retro |
 
 ### Core Capabilities
 
 - **Real-time rendering** — All effects process at 60fps via a ping-pong framebuffer pipeline
+- **Render scale** — Reduce canvas resolution (25%, 50%, 100%) for performance while maintaining effect quality
 - **Multi-pass shaders** — Bloom uses a 4-pass pipeline (brightpass, horizontal blur, vertical blur, combine)
-- **Custom presets** — Save, load, and delete your own filter combinations
-- **Undo / Redo** — Full history stack for filter additions, removals, and parameter changes
-- **Export** — Save as PNG, JPEG, or WebP
+- **Custom presets** — Save, load, and delete your own filter combinations to `localStorage`
+- **Undo / Redo** — Full history stack (30 states) for filter additions, removals, and parameter changes
+- **Export** — Save as PNG, JPEG, or WebP. Exports always render at full resolution regardless of render scale
 - **Before / After comparison** — Split-view slider to compare original and processed images
 - **Drag-and-drop** — Drop images directly onto the editor
 - **Zoom & Pan** — Mouse wheel zoom with click-and-drag panning
 - **GPU texture capping** — Automatically downscales images exceeding GPU limits
 - **Context loss recovery** — Gracefully handles WebGL context loss and restoration
-- **Zero dependencies on external GPU libraries** — Pure WebGL2, no Three.js, no Pixi.js
+- **Background shaders** — Landing page features 4 animated background shaders from [Radiant Shaders](https://radiant-shaders.com/)
+- **Zero external GPU dependencies** — Pure WebGL2, no Three.js, no Pixi.js
 
 ### Keyboard Shortcuts
 
@@ -100,16 +85,11 @@ The entire application runs in the browser. There is no backend, no Electron wra
 | `C` | Toggle before/after comparison |
 | `D` | Toggle all effects on/off |
 | `E` | Open effects browser |
-| `P` | Toggle preset dropdown |
-| `L` | Toggle lock on selected effect |
+| `P` | Open preset browser |
+| `L` | Lock/unlock selected effect |
 | `Ctrl+L` | Lock/unlock all effects |
+| `R` | Cycle render scale (25% → 50% → 100%) |
 | `Escape` | Close dropdown menus |
-
-### Custom Presets
-
-Presets are saved to `localStorage` under the key `spectra-custom-presets`. Each preset stores filter types, order, parameter values, and enabled/disabled state.
-
-To save a preset: configure your filters, click the preset dropdown in the bottom panel, and select "Save Current".
 
 ---
 
@@ -146,15 +126,8 @@ That's it.
    ```
 5. Open `http://localhost:5173` in your browser
 
----
+### Production Build
 
-## Production Build
-
-If you want to build the app for deployment (hosting on a server, Netlify, Vercel, etc.):
-
-**Windows:** Double-click `build.bat`
-
-**Mac / Linux:**
 ```
 bun run build
 ```
@@ -163,21 +136,6 @@ Output is written to the `dist/` directory. To preview it locally:
 ```
 bun run preview
 ```
-
----
-
-## Development
-
-If you're modifying the code and want the app to auto-reload when you save changes:
-
-**Windows:** Double-click `scripts\dev.bat`
-
-**Mac / Linux:**
-```
-bun run dev
-```
-
-This starts the Vite dev server with hot reload. The app updates instantly when you edit any file.
 
 ---
 
@@ -274,8 +232,9 @@ src/
 2. Filters are applied in reverse order through a ping-pong framebuffer pair (targetA ↔ targetB)
 3. Each filter reads from one buffer, writes to the other
 4. Multi-pass filters (Bloom) allocate additional render targets from a pool
-5. The final result is drawn to the screen canvas
-6. The RAF loop runs only when animated filters are active or state changes — otherwise it stops completely
+5. When render scale < 100%, effects render to an intermediate target at reduced resolution, then upscale to the canvas
+6. The final result is drawn to the screen canvas
+7. The RAF loop runs only when animated filters are active or state changes — otherwise it stops completely
 
 ### Shader Compilation
 
@@ -307,7 +266,19 @@ Features like `KHR_parallel_shader_compile` are used when available but are not 
 - Tested on Windows 10 with Zen Browser (Firefox) and Brave Browser (Chromium) — other OS and browser combinations are unverified
 - Not tested on integrated graphics, older discrete GPUs, or mobile devices
 - No accessibility features (screen reader support, keyboard navigation for all controls)
-- No automated test suite — testing was done manually on my personal machine
+- No automated test suite — testing was done manually
+
+---
+
+## Credits & Inspiration
+
+| | Name | Link |
+|---|------|------|
+| | **VoidMesh** — the original inspiration for this project | [GitHub](https://github.com/ogdakke/voidmesh) |
+| | **Radiant Shaders** — landing page background shaders (MIT, Paul Bakaus) | [radiant-shaders.com](https://radiant-shaders.com/) / [GitHub](https://github.com/pbakaus/radiant) |
+| | **JetBrains Mono** — monospace font used throughout | [jetbrains.com](https://www.jetbrains.com/lmono/) |
+| | **Instrument Serif** — serif font for the landing page | [Google Fonts](https://fonts.google.com/specimen/Instrument+Serif) |
+| | **Lucide** — icon set | [lucide.dev](https://lucide.dev/) |
 
 ---
 

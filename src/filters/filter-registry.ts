@@ -1,4 +1,5 @@
 import type { FontAtlas } from '../gl/fontAtlas';
+import { ASCII_RAMP, ASCII_EDGE_GLYPHS } from '../constants';
 
 export type FilterType =
   | 'Bloom'
@@ -17,9 +18,6 @@ export type FilterType =
   | 'HalftoneBeta'
   | 'HalftoneBeta2'
   | 'AsciiBeta2';
-
-const ASCII_RAMP = ' .:-=+*#%@';
-const ASCII_EDGE_GLYPHS = '-/|\\';
 
 interface FilterPass {
   shader: string;

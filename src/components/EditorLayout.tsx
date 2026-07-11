@@ -4,33 +4,19 @@ import {
   imageUrlAtom,
   isExportingAtom,
   filtersAtom,
-  selectedFilterIdAtom,
-  presetBrowserOpenAtom,
-  effectBrowserOpenAtom,
   resetEditorAtom,
-  undoAtom,
-  redoAtom,
-  removeFilterAtom,
-  batchToggleFiltersAtom,
-  toggleLockFilterAtom,
-  batchLockFiltersAtom,
-  setPresetBrowserOpenAtom,
-  setEffectBrowserOpenAtom,
   setImageUrlAtom,
   triggerExportAtom,
   setExportingAtom,
   exportFormatAtom,
   pendingExportHandleAtom,
+  renderScaleAtom,
 } from "../store/atoms";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { CanvasArea } from "./CanvasArea";
 import { BottomPanel } from "./BottomPanel";
-
-const EXPORT_FORMATS = [
-  { value: 'png' as const, label: 'PNG', mime: 'image/png', ext: '.png' },
-  { value: 'jpeg' as const, label: 'JPEG', mime: 'image/jpeg', ext: '.jpg' },
-  { value: 'webp' as const, label: 'WebP', mime: 'image/webp', ext: '.webp' },
-];
+import { EXPORT_FORMATS, RENDER_SCALES } from "../constants";
+import { useEditorKeyboardShortcuts } from "../hooks/useEditorKeyboardShortcuts";
 
 export function EditorLayout({ onBack }: { onBack: () => void }) {
   const [dragOver, setDragOver] = useState(false);
@@ -40,22 +26,13 @@ export function EditorLayout({ onBack }: { onBack: () => void }) {
   const setExporting = useSetAtom(setExportingAtom);
   const triggerExport = useSetAtom(triggerExportAtom);
   const filters = useAtomValue(filtersAtom);
-  const selectedId = useAtomValue(selectedFilterIdAtom);
-  const presetOpen = useAtomValue(presetBrowserOpenAtom);
-  const effectOpen = useAtomValue(effectBrowserOpenAtom);
   const exportFormat = useAtomValue(exportFormatAtom);
   const setExportFormat = useSetAtom(exportFormatAtom);
   const setPendingExportHandle = useSetAtom(pendingExportHandleAtom);
-  const undo = useSetAtom(undoAtom);
-  const redo = useSetAtom(redoAtom);
-  const removeFilter = useSetAtom(removeFilterAtom);
-  const batchToggle = useSetAtom(batchToggleFiltersAtom);
-  const toggleLock = useSetAtom(toggleLockFilterAtom);
-  const batchLock = useSetAtom(batchLockFiltersAtom);
+  const renderScale = useAtomValue(renderScaleAtom);
+  const setRenderScale = useSetAtom(renderScaleAtom);
   const resetEditor = useSetAtom(resetEditorAtom);
   const setImageUrl = useSetAtom(setImageUrlAtom);
-  const setPresetOpen = useSetAtom(setPresetBrowserOpenAtom);
-  const setEffectOpen = useSetAtom(setEffectBrowserOpenAtom);
   const hasFilters = filters.length > 0;
   const canExport = imageUrl !== null && hasFilters;
   const exportLockRef = useRef(false);
@@ -63,6 +40,8 @@ export function EditorLayout({ onBack }: { onBack: () => void }) {
   // eslint-disable-next-line react-hooks/refs -- intentional: keep ref fresh for event handlers
   onBackRef.current = onBack;
   useEffect(() => { if (!isExporting) exportLockRef.current = false; }, [isExporting]);
+
+  useEditorKeyboardShortcuts(setBeforeAfter);
 
   const handleBack = useCallback(() => {
     if (imageUrl) {
@@ -75,11 +54,16 @@ export function EditorLayout({ onBack }: { onBack: () => void }) {
 
   const [formatOpen, setFormatOpen] = useState(false);
   const formatRef = useRef<HTMLDivElement>(null);
+  const [resOpen, setResOpen] = useState(false);
+  const resRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (formatRef.current && !formatRef.current.contains(e.target as Node)) {
         setFormatOpen(false);
+      }
+      if (resRef.current && !resRef.current.contains(e.target as Node)) {
+        setResOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClick);
@@ -95,94 +79,6 @@ export function EditorLayout({ onBack }: { onBack: () => void }) {
     addEventListener("beforeunload", fn);
     return () => removeEventListener("beforeunload", fn);
   }, [imageUrl]);
-
-  const filtersRef = useRef(filters);
-  // eslint-disable-next-line react-hooks/refs -- intentional: keep ref fresh for event handlers
-  filtersRef.current = filters;
-  const selectedIdRef = useRef(selectedId);
-  // eslint-disable-next-line react-hooks/refs -- intentional: keep ref fresh for event handlers
-  selectedIdRef.current = selectedId;
-  const presetOpenRef = useRef(presetOpen);
-  // eslint-disable-next-line react-hooks/refs -- intentional: keep ref fresh for event handlers
-  presetOpenRef.current = presetOpen;
-  const effectOpenRef = useRef(effectOpen);
-  // eslint-disable-next-line react-hooks/refs -- intentional: keep ref fresh for event handlers
-  effectOpenRef.current = effectOpen;
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement;
-      const tag = target.tagName;
-      const type = (target as HTMLInputElement).type;
-      const isTyping = tag === "TEXTAREA" || (tag === "INPUT" && type !== "range");
-
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "z") {
-        if (isTyping) return;
-        e.preventDefault();
-        redo();
-        return;
-      }
-
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") {
-        if (isTyping) return;
-        e.preventDefault();
-        redo();
-        return;
-      }
-
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
-        if (isTyping) return;
-        e.preventDefault();
-        undo();
-        return;
-      }
-
-      if (isTyping) return;
-
-      if (e.key === "Delete" || e.key === "Backspace") {
-        if (selectedIdRef.current) {
-          e.preventDefault();
-          removeFilter(selectedIdRef.current);
-        }
-        return;
-      }
-
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "l") {
-        e.preventDefault();
-        batchLock();
-        return;
-      }
-
-      if (e.ctrlKey || e.metaKey) return;
-
-      switch (e.key.toLowerCase()) {
-        case 'c':
-          e.preventDefault();
-          setBeforeAfter(v => !v);
-          break;
-        case 'd':
-          e.preventDefault();
-          batchToggle(filtersRef.current.map(f => f.id));
-          break;
-        case 'p':
-          e.preventDefault();
-          setPresetOpen(!presetOpenRef.current);
-          break;
-        case 'e':
-          e.preventDefault();
-          setEffectOpen(!effectOpenRef.current);
-          break;
-        case 'l':
-          e.preventDefault();
-          if (selectedIdRef.current) toggleLock(selectedIdRef.current);
-          break;
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [undo, redo, removeFilter, batchToggle, toggleLock, batchLock, setPresetOpen, setEffectOpen, setBeforeAfter]);
-
-
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -232,6 +128,33 @@ export function EditorLayout({ onBack }: { onBack: () => void }) {
               {beforeAfter ? <div className="i-lucide-image-off text-14px" /> : <div className="i-lucide-image text-14px" />}
               {beforeAfter ? 'Normal' : 'Compare'}
             </button>
+          )}
+          {imageUrl && (
+            <div ref={resRef} className="relative">
+              <button
+                onClick={() => setResOpen(v => !v)}
+                title="Canvas resolution only — exports always use full quality"
+                className="px-5 py-2 text-sm font-medium bg-neutral-800 border border-neutral-700 text-neutral-400 hover:text-neutral-200 hover:border-neutral-600 hover:scale-105 active:scale-95 transition-all duration-150 rounded-md cursor-pointer flex items-center gap-2"
+              >
+                <div className="i-lucide-monitor text-14px" />
+                {RENDER_SCALES.find(s => s.value === renderScale)?.shortLabel ?? '100%'}
+                <div className={`i-lucide-chevron-down text-12px transition-transform duration-200 ${resOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {resOpen && (
+                <div className="absolute right-0 top-full mt-1 w-36 bg-neutral-900 border border-neutral-700 rounded-lg shadow-xl z-50 overflow-hidden animate-drop-in">
+                  {RENDER_SCALES.map((scale) => (
+                    <button
+                      key={scale.value}
+                      onClick={() => { setRenderScale(scale.value); setResOpen(false); }}
+                      className={`w-full text-left px-3 py-2 text-xs transition-colors cursor-pointer hover:bg-neutral-800 flex items-center justify-between ${renderScale === scale.value ? 'text-orange-400' : 'text-neutral-300 hover:text-white'}`}
+                    >
+                      <span>{scale.label}</span>
+                      <span className="font-mono text-neutral-500">{scale.shortLabel}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
           <div ref={formatRef} className="relative">
             <button

@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Spectra Studio</title>
     <meta name="description" content="Spectra Studio" />
     <meta name="robots" content="index, follow" />
@@ -16,6 +16,7 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; font-src 'self'; script-src 'self' 'unsafe-inline'; connect-src 'self' ws://localhost:* wss://localhost:*; worker-src 'self' blob:; form-action 'none'; base-uri 'self'; object-src 'none'">
     <script>if (window.self !== window.top) window.top.location = window.self.location;</script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preload" href="/fonts/jetbrains-mono-latin-800.woff2" as="font" type="font/woff2" crossorigin />
     <style>
       @font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:800;font-display:swap;src:url(/fonts/jetbrains-mono-latin-800.woff2) format('woff2')}
       body{background:#0a0a0a;margin:0}#root{min-height:100vh;opacity:0;transition:opacity .45s ease}#root.ready{opacity:1}

@@ -16,7 +16,8 @@ export function initRainOnGlass(canvas: HTMLCanvasElement, opts?: RainOnGlassOpt
 
   let paused = false;
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  document.addEventListener('visibilitychange', () => { paused = document.hidden; });
+  const onVisibilityChange = () => { paused = document.hidden; };
+  document.addEventListener('visibilitychange', onVisibilityChange);
 
   // ── Helpers ──
   function rand(from?: number, to?: number, interp?: (n: number) => number): number {
@@ -881,5 +882,6 @@ export function initRainOnGlass(canvas: HTMLCanvasElement, opts?: RainOnGlassOpt
   return () => {
     cancelAnimationFrame(rafId);
     window.removeEventListener('resize', resize);
+    document.removeEventListener('visibilitychange', onVisibilityChange);
   };
 }

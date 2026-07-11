@@ -32,9 +32,16 @@ for (const m of FILTER_MANIFESTS) {
 
 const PREWARM_BATCH = 3;
 
-const scheduleIdle: (cb: (deadline: { didTimeout: boolean; timeRemaining: () => number }) => void) => number = typeof requestIdleCallback !== 'undefined'
+const hasIdleCallback = typeof requestIdleCallback !== 'undefined';
+
+const scheduleIdle: (cb: (deadline: { didTimeout: boolean; timeRemaining: () => number }) => void) => number = hasIdleCallback
   ? requestIdleCallback
   : (cb: (deadline: { didTimeout: boolean; timeRemaining: () => number }) => void) => setTimeout(() => cb({ didTimeout: false, timeRemaining: () => 0 }), 0) as unknown as number;
+
+function cancelIdle(id: number) {
+  if (hasIdleCallback) cancelIdleCallback(id);
+  else clearTimeout(id);
+}
 
 export class ShaderLibrary {
   private gl: WebGL2RenderingContext;
@@ -62,8 +69,10 @@ export class ShaderLibrary {
         this.cache.set(key, pendingProg);
         return pendingProg;
       }
-      const fallback = this.cache.get('passthrough');
-      if (fallback) return fallback;
+      if (this.hasParallel) {
+        const fallback = this.cache.get('passthrough');
+        if (fallback) return fallback;
+      }
     }
 
     const fragSource = SHADER_SOURCES[key];
@@ -117,12 +126,8 @@ export class ShaderLibrary {
     return this.pending.size > 0;
   }
 
-  isPrewarmDone(): boolean {
-    return this._prewarmDone;
-  }
-
   dispose() {
-    if (this._prewarmIdle) cancelAnimationFrame(this._prewarmIdle as unknown as number);
+    if (this._prewarmIdle) cancelIdle(this._prewarmIdle);
     this.cache.forEach((p) => this.gl.deleteProgram(p));
     this.cache.clear();
     this.pending.forEach((p) => this.gl.deleteProgram(p));

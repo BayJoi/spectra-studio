@@ -18,7 +18,8 @@ export function initHologramGlitch(canvas: HTMLCanvasElement, opts?: HologramGli
   const DARKNESS = opts?.darkness ?? 0.5;
 
   let paused = false;
-  document.addEventListener('visibilitychange', () => { paused = document.hidden; });
+  const onVisibilityChange = () => { paused = document.hidden; };
+  document.addEventListener('visibilitychange', onVisibilityChange);
 
   const vertSrc = [
     'attribute vec2 a_pos;',
@@ -306,26 +307,32 @@ export function initHologramGlitch(canvas: HTMLCanvasElement, opts?: HologramGli
     };
   }
 
-  canvas.addEventListener('mousemove', (e) => {
+  const onMouseMove = (e: MouseEvent) => {
     const p = cssToGL(e.clientX, e.clientY);
     mouseX = p.x; mouseY = p.y;
     mouseActive = true;
-  });
-  canvas.addEventListener('mouseleave', () => { mouseActive = false; });
-  canvas.addEventListener('touchstart', (e) => {
+  };
+  const onMouseLeave = () => { mouseActive = false; };
+  const onTouchStart = (e: TouchEvent) => {
     const t = e.touches[0];
     const p = cssToGL(t.clientX, t.clientY);
     mouseX = p.x; mouseY = p.y;
     mouseActive = true;
-  }, { passive: true });
-  canvas.addEventListener('touchmove', (e) => {
+  };
+  const onTouchMove = (e: TouchEvent) => {
     e.preventDefault();
     const t = e.touches[0];
     const p = cssToGL(t.clientX, t.clientY);
     mouseX = p.x; mouseY = p.y;
     mouseActive = true;
-  }, { passive: false });
-  canvas.addEventListener('touchend', () => { mouseActive = false; });
+  };
+  const onTouchEnd = () => { mouseActive = false; };
+
+  canvas.addEventListener('mousemove', onMouseMove);
+  canvas.addEventListener('mouseleave', onMouseLeave);
+  canvas.addEventListener('touchstart', onTouchStart, { passive: true });
+  canvas.addEventListener('touchmove', onTouchMove, { passive: false });
+  canvas.addEventListener('touchend', onTouchEnd);
 
   let needsResize = true;
 
@@ -375,5 +382,11 @@ export function initHologramGlitch(canvas: HTMLCanvasElement, opts?: HologramGli
   return () => {
     cancelAnimationFrame(rafId);
     window.removeEventListener('resize', resize);
+    document.removeEventListener('visibilitychange', onVisibilityChange);
+    canvas.removeEventListener('mousemove', onMouseMove);
+    canvas.removeEventListener('mouseleave', onMouseLeave);
+    canvas.removeEventListener('touchstart', onTouchStart);
+    canvas.removeEventListener('touchmove', onTouchMove);
+    canvas.removeEventListener('touchend', onTouchEnd);
   };
 }

@@ -1,13 +1,11 @@
-import { useRef, useState, useEffect, useMemo } from "react";
+import { useRef, useState, useEffect, useMemo, useCallback } from "react";
 import { useAtomValue, useSetAtom } from "jotai";
-import { jotaiStore, filtersAtom, selectedFilterIdAtom, imageUrlAtom, exportTriggerAtom, updateFilterParamAtom, setExportingAtom, exportFormatAtom, pendingExportHandleAtom } from "../store/atoms";
+import { jotaiStore, filtersAtom, selectedFilterIdAtom, imageUrlAtom, exportTriggerAtom, updateFilterParamAtom, setExportingAtom, exportFormatAtom, pendingExportHandleAtom, renderScaleAtom } from "../store/atoms";
 import type { FilterData } from "../store/atoms";
 import { EffectEngine } from "../gl/engine";
+import { EXPORT_FORMATS } from "../constants";
+import { ZoomControls } from "./canvas/ZoomControls";
 import type Stats from "stats-gl";
-
-
-const MIME_MAP: Record<string, string> = { png: 'image/png', jpeg: 'image/jpeg', webp: 'image/webp' };
-const EXT_MAP: Record<string, string> = { png: '.png', jpeg: '.jpg', webp: '.webp' };
 
 export function CanvasArea({ beforeAfter }: { beforeAfter?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -21,6 +19,7 @@ export function CanvasArea({ beforeAfter }: { beforeAfter?: boolean }) {
   const exportTrigger = useAtomValue(exportTriggerAtom);
   const exportFormat = useAtomValue(exportFormatAtom);
   const pendingExportHandle = useAtomValue(pendingExportHandleAtom);
+  const renderScale = useAtomValue(renderScaleAtom);
   const setExporting = useSetAtom(setExportingAtom);
   const updateFilterParam = useSetAtom(updateFilterParamAtom);
 
@@ -124,14 +123,48 @@ export function CanvasArea({ beforeAfter }: { beforeAfter?: boolean }) {
     };
   }, [imageUrl]);
 
+  useEffect(() => {
+    if (engineRef.current && ready) {
+      engineRef.current.setRenderScale(renderScale);
+      engineRef.current.render(jotaiStore.get(filtersAtom));
+    }
+  }, [renderScale, ready]);
+
   const moveRaf = useRef<number>(0);
   const exportingRef = useRef(false);
+
+  const handleWheel = useCallback((e: WheelEvent) => {
+    e.preventDefault();
+    setSmoothZoom(false);
+    const cont = containerRef.current;
+    if (!cont) return;
+    const crect = cont.getBoundingClientRect();
+    const mx = e.clientX - crect.left;
+    const my = e.clientY - crect.top;
+    const cx = crect.width / 2;
+    const cy = crect.height / 2;
+    const delta = -e.deltaY * 0.001;
+    setTransform((prev) => {
+      const newScale = Math.max(0.1, Math.min(prev.scale * (1 + delta), 50));
+      const ratio = newScale / prev.scale;
+      const newX = mx - cx - (mx - cx - prev.x) * ratio;
+      const newY = my - cy - (my - cy - prev.y) * ratio;
+      return { x: newX, y: newY, scale: newScale };
+    });
+  }, []);
 
   useEffect(() => {
     return () => {
       cancelAnimationFrame(moveRaf.current);
     };
   }, []);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => el.removeEventListener('wheel', handleWheel);
+  }, [handleWheel]);
 
   useEffect(() => {
     if (!ready || !engineRef.current) return;
@@ -177,11 +210,13 @@ export function CanvasArea({ beforeAfter }: { beforeAfter?: boolean }) {
     rafId = requestAnimationFrame(loop);
 
     const unsub = jotaiStore.sub(filtersAtom, kick);
+    const unsubScale = jotaiStore.sub(renderScaleAtom, kick);
 
     return () => {
       active = false;
       cancelAnimationFrame(rafId);
       unsub();
+      unsubScale();
     };
   }, [ready]);
 
@@ -191,8 +226,9 @@ export function CanvasArea({ beforeAfter }: { beforeAfter?: boolean }) {
     if (exportTrigger === 0 || !engineRef.current || !ready) return;
     exportingRef.current = true;
     let cancelled = false;
-    const mimeType = MIME_MAP[exportFormat] ?? 'image/png';
-    const ext = EXT_MAP[exportFormat] ?? '.png';
+    const fmt = EXPORT_FORMATS.find(f => f.value === exportFormat) ?? EXPORT_FORMATS[0];
+    const mimeType = fmt.mime;
+    const ext = fmt.ext;
     (async () => {
       try {
         const blob = await engineRef.current!.exportBlob(jotaiStore.get(filtersAtom), mimeType);
@@ -297,26 +333,6 @@ export function CanvasArea({ beforeAfter }: { beforeAfter?: boolean }) {
     (e.target as HTMLElement).releasePointerCapture(e.pointerId);
   };
 
-  const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    setSmoothZoom(false);
-    const cont = containerRef.current;
-    if (!cont) return;
-    const crect = cont.getBoundingClientRect();
-    const mx = e.clientX - crect.left;
-    const my = e.clientY - crect.top;
-    const cx = crect.width / 2;
-    const cy = crect.height / 2;
-    const delta = -e.deltaY * 0.001;
-    setTransform((prev) => {
-      const newScale = Math.max(0.1, Math.min(prev.scale * (1 + delta), 50));
-      const ratio = newScale / prev.scale;
-      const newX = mx - cx - (mx - cx - prev.x) * ratio;
-      const newY = my - cy - (my - cy - prev.y) * ratio;
-      return { x: newX, y: newY, scale: newScale };
-    });
-  };
-
   const radialBlurHandles = useMemo(() => {
     const selected = filters.find((f) => f.id === selectedFilterId);
     return selected && selected.enabled && selected.type === "RadialBlur" ? [selected] : [];
@@ -351,7 +367,6 @@ export function CanvasArea({ beforeAfter }: { beforeAfter?: boolean }) {
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerUp}
       onPointerCancel={handlePointerUp}
-      onWheel={handleWheel}
     >
       <div
         className={`${imageUrl ? "relative" : "absolute"} ${smoothZoom ? "transition-transform duration-200 ease-out" : ""}`}
@@ -422,34 +437,12 @@ export function CanvasArea({ beforeAfter }: { beforeAfter?: boolean }) {
       )}
 
       {imageUrl && (
-        <div className="absolute bottom-3 left-3 flex items-center gap-2 bg-neutral-900/90 border border-neutral-800 rounded-lg p-2 z-20 animate-fade-in">
-          <div className="flex items-center gap-2 px-2 text-xs font-mono text-neutral-500">
-            <div className="i-lucide-maximize-2 text-16px" />
-            <span>{Math.round(transform.scale * 100)}%</span>
-          </div>
-          <div className="w-px h-5 bg-neutral-800" />
-          <button
-            onClick={() => zoomBy(1 / 1.2)}
-            aria-label="Zoom out"
-            className="w-9 h-9 rounded text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800 hover:scale-105 active:scale-95 flex items-center justify-center transition-all duration-150 cursor-pointer"
-          >
-            <div className="i-lucide-zoom-out text-16px" />
-          </button>
-          <button
-            onClick={() => zoomBy(1.2)}
-            aria-label="Zoom in"
-            className="w-9 h-9 rounded text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800 hover:scale-105 active:scale-95 flex items-center justify-center transition-all duration-150 cursor-pointer"
-          >
-            <div className="i-lucide-zoom-in text-16px" />
-          </button>
-          <button
-            onClick={resetZoom}
-            aria-label="Reset zoom"
-            className="w-9 h-9 rounded text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800 hover:scale-105 active:scale-95 flex items-center justify-center transition-all duration-150 cursor-pointer"
-          >
-            <div className="i-lucide-maximize-2 text-16px" />
-          </button>
-        </div>
+        <ZoomControls
+          scale={transform.scale}
+          onZoomIn={() => zoomBy(1.2)}
+          onZoomOut={() => zoomBy(1 / 1.2)}
+          onReset={resetZoom}
+        />
       )}
 
       {exported && (
