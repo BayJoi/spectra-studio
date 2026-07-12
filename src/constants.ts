@@ -1,7 +1,7 @@
 export const ASCII_RAMP = ' .:-=+*#%@';
 export const ASCII_EDGE_GLYPHS = '-/|\\';
 
-export interface ExportFormat {
+interface ExportFormat {
   value: 'png' | 'jpeg' | 'webp';
   label: string;
   mime: string;
@@ -14,7 +14,7 @@ export const EXPORT_FORMATS: ExportFormat[] = [
   { value: 'webp', label: 'WebP', mime: 'image/webp', ext: '.webp' },
 ];
 
-export interface RenderScale {
+interface RenderScale {
   value: number;
   label: string;
   shortLabel: string;

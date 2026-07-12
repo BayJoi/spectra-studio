@@ -36,15 +36,18 @@ export function CanvasArea({ beforeAfter }: { beforeAfter?: boolean }) {
   const [splitPos, setSplitPos] = useState(0.5);
   const sliderDragging = useRef(false);
 
-  const zoomBy = (factor: number) => {
+  const zoomBy = useCallback((factor: number) => {
     setSmoothZoom(true);
     setTransform((prev) => ({ ...prev, scale: Math.max(0.1, Math.min(prev.scale * factor, 50)) }));
-  };
+  }, []);
 
-  const resetZoom = () => {
+  const zoomIn = useCallback(() => zoomBy(1.2), [zoomBy]);
+  const zoomOut = useCallback(() => zoomBy(1 / 1.2), [zoomBy]);
+
+  const resetZoom = useCallback(() => {
     setSmoothZoom(true);
     setTransform({ x: 0, y: 0, scale: 1 });
-  };
+  }, []);
 
   const statsRef = useRef<Stats | null>(null);
 
@@ -232,26 +235,32 @@ export function CanvasArea({ beforeAfter }: { beforeAfter?: boolean }) {
     (async () => {
       try {
         const blob = await engineRef.current!.exportBlob(jotaiStore.get(filtersAtom), mimeType);
-        if (cancelled || !blob) return;
+        if (cancelled || !blob) {
+            if (!cancelled) {
+              exportingRef.current = false;
+              setExporting(false);
+              setPendingExportHandle(null);
+            }
+            return;
+          }
 
-        const handle = pendingExportHandle;
+        const handle = jotaiStore.get(pendingExportHandleAtom);
         if (handle) {
           const writable = await handle.createWritable();
           await writable.write(blob);
           await writable.close();
+          setExported(true);
         } else {
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
           a.href = url;
           a.download = `spectra-export-${Date.now()}${ext}`;
-          a.rel = "noopener";
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
-          setTimeout(() => URL.revokeObjectURL(url), 5000);
+          URL.revokeObjectURL(url);
+          setExported(true);
         }
-
-        setExported(true);
       } catch (err) {
         console.error('[CanvasArea] Export failed:', err);
       }
@@ -265,7 +274,7 @@ export function CanvasArea({ beforeAfter }: { beforeAfter?: boolean }) {
       cancelled = true;
       exportingRef.current = false;
     };
-  }, [exportTrigger, ready, exportFormat, setExporting, pendingExportHandle, setPendingExportHandle]);
+  }, [exportTrigger, ready, exportFormat, setExporting, setPendingExportHandle]);
 
   useEffect(() => {
     if (!beforeAfter) return;
@@ -439,18 +448,20 @@ export function CanvasArea({ beforeAfter }: { beforeAfter?: boolean }) {
       {imageUrl && (
         <ZoomControls
           scale={transform.scale}
-          onZoomIn={() => zoomBy(1.2)}
-          onZoomOut={() => zoomBy(1 / 1.2)}
+          onZoomIn={zoomIn}
+          onZoomOut={zoomOut}
           onReset={resetZoom}
         />
       )}
 
       {exported && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-neutral-900/95 border border-orange-500/30 rounded-lg px-4 py-2.5 z-40 shadow-lg shadow-black/40 animate-slide-down">
+        <div className="absolute top-4 right-4 flex items-center gap-2 bg-neutral-900/95 border border-orange-500/30 rounded-lg px-4 py-2.5 z-40 shadow-lg shadow-black/40 animate-slide-down">
           <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
-          <p className="text-neutral-200 text-sm font-medium">Image exported</p>
+          <p className="text-neutral-200 text-sm font-medium">Saved</p>
         </div>
       )}
+
+
     </div>
   );
 }

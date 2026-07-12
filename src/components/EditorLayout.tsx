@@ -3,7 +3,7 @@ import { useAtomValue, useSetAtom } from "jotai";
 import {
   imageUrlAtom,
   isExportingAtom,
-  filtersAtom,
+  hasFiltersAtom,
   resetEditorAtom,
   setImageUrlAtom,
   triggerExportAtom,
@@ -18,6 +18,8 @@ import { BottomPanel } from "./BottomPanel";
 import { EXPORT_FORMATS, RENDER_SCALES } from "../constants";
 import { useEditorKeyboardShortcuts } from "../hooks/useEditorKeyboardShortcuts";
 
+const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+
 export function EditorLayout({ onBack }: { onBack: () => void }) {
   const [dragOver, setDragOver] = useState(false);
   const [beforeAfter, setBeforeAfter] = useState(false);
@@ -25,7 +27,7 @@ export function EditorLayout({ onBack }: { onBack: () => void }) {
   const isExporting = useAtomValue(isExportingAtom);
   const setExporting = useSetAtom(setExportingAtom);
   const triggerExport = useSetAtom(triggerExportAtom);
-  const filters = useAtomValue(filtersAtom);
+  const hasFilters = useAtomValue(hasFiltersAtom);
   const exportFormat = useAtomValue(exportFormatAtom);
   const setExportFormat = useSetAtom(exportFormatAtom);
   const setPendingExportHandle = useSetAtom(pendingExportHandleAtom);
@@ -33,7 +35,6 @@ export function EditorLayout({ onBack }: { onBack: () => void }) {
   const setRenderScale = useSetAtom(renderScaleAtom);
   const resetEditor = useSetAtom(resetEditorAtom);
   const setImageUrl = useSetAtom(setImageUrlAtom);
-  const hasFilters = filters.length > 0;
   const canExport = imageUrl !== null && hasFilters;
   const exportLockRef = useRef(false);
   const onBackRef = useRef(onBack);
@@ -85,7 +86,13 @@ export function EditorLayout({ onBack }: { onBack: () => void }) {
     setDragOver(false);
     const files = Array.from(e.dataTransfer.files);
     const imageFile = files.find((f) => f.type.startsWith("image/"));
-    if (imageFile) setImageUrl(imageFile);
+    if (imageFile) {
+      if (imageFile.size > MAX_FILE_SIZE) {
+        alert('File too large. Maximum size is 100MB.');
+        return;
+      }
+      setImageUrl(imageFile);
+    }
   }, [setImageUrl]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -181,22 +188,44 @@ export function EditorLayout({ onBack }: { onBack: () => void }) {
                       exportLockRef.current = true;
                       setExporting(true);
 
-                      const mimeType = fmt.mime;
                       const ext = fmt.ext;
+                      const fileName = `spectra-export-${Date.now()}${ext}`;
 
                       if ('showSaveFilePicker' in window) {
                         try {
                           // eslint-disable-next-line @typescript-eslint/no-explicit-any -- File System Access API not in TS lib
                           const handle = await (window as any).showSaveFilePicker({
-                            suggestedName: `spectra-export-${Date.now()}${ext}`,
-                            types: [{ description: `${fmt.label} Image`, accept: { [mimeType]: [ext] } }],
+                            suggestedName: fileName,
+                            types: [{ description: `${fmt.label} Image`, accept: { 'image/*': [ext] } }],
                           });
                           setPendingExportHandle(handle);
-                        } catch {
-                          setExporting(false);
-                          exportLockRef.current = false;
-                          setPendingExportHandle(null);
-                          return;
+                        } catch (err: unknown) {
+                          if (err instanceof DOMException && err.name === 'AbortError') {
+                            setExporting(false);
+                            exportLockRef.current = false;
+                            setPendingExportHandle(null);
+                            return;
+                          }
+                          // Extension not in system MIME DB (e.g., .webp on Windows).
+                          // Retry without type filtering.
+                          try {
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            const handle = await (window as any).showSaveFilePicker({
+                              suggestedName: fileName,
+                            });
+                            setPendingExportHandle(handle);
+                          } catch (err2: unknown) {
+                            if (err2 instanceof DOMException && err2.name === 'AbortError') {
+                              setExporting(false);
+                              exportLockRef.current = false;
+                              setPendingExportHandle(null);
+                              return;
+                            }
+                            setExporting(false);
+                            exportLockRef.current = false;
+                            setPendingExportHandle(null);
+                            return;
+                          }
                         }
                       } else {
                         setPendingExportHandle(null);

@@ -39,10 +39,14 @@ function uploadTexture(gl: WebGL2RenderingContext, canvas: HTMLCanvasElement): W
 
 async function loadFontAndRender(gl: WebGL2RenderingContext, chars: string, cellPx: number): Promise<FontAtlas> {
   try {
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
     await Promise.race([
       document.fonts.load(`800 ${Math.floor(cellPx * 0.85)}px "JetBrains Mono"`),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('font timeout')), 2000)),
+      new Promise<void>((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error('font timeout')), 2000);
+      }),
     ]);
+    clearTimeout(timeoutId);
   } catch (e) {
     console.warn('[FontAtlas] Font load failed, using fallback:', e);
   }

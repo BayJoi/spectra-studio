@@ -1,5 +1,5 @@
-@import "@fontsource/instrument-serif/400.css";
-@import "@fontsource/jetbrains-mono/800.css";
+@import "@fontsource/instrument-serif/latin-400.css";
+@import "@fontsource/jetbrains-mono/latin-800.css";
 
 :root {
   --bottom-panel-height: 280px;

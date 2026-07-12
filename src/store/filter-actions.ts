@@ -1,7 +1,7 @@
 import { atom } from "jotai";
 import { filterManifestByType } from "../filters/filter-registry";
 import type { FilterType } from "../filters/filter-registry";
-import { filtersAtom, selectedFilterIdAtom, pastFiltersAtom, imageUrlAtom } from "./core-atoms";
+import { filtersAtom, selectedFilterIdAtom, pastFiltersAtom, futureFiltersAtom, imageUrlAtom } from "./core-atoms";
 import type { FilterData } from "./types";
 import { uuid } from "./types";
 
@@ -128,4 +128,28 @@ export const moveFilterDownAtom = atom(null, (get: any, set: any, filterId: stri
 export const reorderFiltersAtom = atom(null, (get: any, set: any, filters: FilterData[]) => {
   pushToPast(get, set);
   set(filtersAtom, filters);
+});
+
+// Batches updateFilterParam + history clear into a single atom write → 1 re-render instead of 3
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const updateFilterParamWithHistoryAtom = atom(
+  null,
+  (get: any, set: any, filterId: string, param: string, value: number) => {
+    const pre = get(filtersAtom);
+    set(
+      filtersAtom,
+      pre.map((f: FilterData) =>
+        f.id === filterId ? { ...f, params: { ...f.params, [param]: value } } : f,
+      ),
+    );
+    set(pastFiltersAtom, [...get(pastFiltersAtom), pre].slice(-MAX_HISTORY));
+    set(futureFiltersAtom, []);
+  },
+);
+
+// Batches past/future clear into a single atom write → 1 re-render instead of 2
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const pushHistoryAtom = atom(null, (get: any, set: any, prev: FilterData[]) => {
+  set(pastFiltersAtom, [...get(pastFiltersAtom), prev].slice(-MAX_HISTORY));
+  set(futureFiltersAtom, []);
 });

@@ -307,8 +307,7 @@ export function initRainOnGlass(canvas: HTMLCanvasElement, opts?: RainOnGlassOpt
   const dropletsPixelDensity = 1;
   let dropletsCounter = 0;
   let drops: any[] = [];
-  // TODO: wire up textureCleaningIterations
-  let textureCleaningIterations = 0;
+  // Noop placeholder: intentionally empty
   let rdLastRender: number | null = null;
 
   function deltaR() { return options.maxR - options.minR; }
@@ -387,12 +386,6 @@ export function initRainOnGlass(canvas: HTMLCanvasElement, opts?: RainOnGlassOpt
   }
 
   function updateDroplets(timeScale: number) {
-    if (textureCleaningIterations > 0) {
-      textureCleaningIterations -= 1 * timeScale;
-      dropletsCtx.globalCompositeOperation = 'destination-out';
-      dropletsCtx.fillStyle = `rgba(0,0,0,${0.05 * timeScale})`;
-      dropletsCtx.fillRect(0, 0, rdWidth * dropletsPixelDensity, rdHeight * dropletsPixelDensity);
-    }
     if (options.raining) {
       dropletsCounter += options.dropletsRate * timeScale * areaMultiplier() * rainAmount;
       let totalToSpawn = Math.floor(dropletsCounter);
@@ -795,6 +788,7 @@ export function initRainOnGlass(canvas: HTMLCanvasElement, opts?: RainOnGlassOpt
   }
 
   // ── Interaction ──
+  const interactiveListeners: Array<[string, EventListener]> = [];
   if (interactive) {
     function createSplash(clientX: number, clientY: number) {
       const rect = canvas.getBoundingClientRect();
@@ -863,18 +857,32 @@ export function initRainOnGlass(canvas: HTMLCanvasElement, opts?: RainOnGlassOpt
     }
 
     let rainMouseDown = false;
-    canvas.addEventListener('mousedown', (e) => { rainMouseDown = true; createSplash(e.clientX, e.clientY); });
-    canvas.addEventListener('mousemove', (e) => { if (rainMouseDown) wipeAt(e.clientX, e.clientY); });
-    canvas.addEventListener('mouseup', () => { rainMouseDown = false; });
-    canvas.addEventListener('touchstart', (e) => {
+    const onRainMouseDown = (e: Event) => { rainMouseDown = true; createSplash((e as MouseEvent).clientX, (e as MouseEvent).clientY); };
+    const onRainMouseMove = (e: Event) => { if (rainMouseDown) wipeAt((e as MouseEvent).clientX, (e as MouseEvent).clientY); };
+    const onRainMouseUp = () => { rainMouseDown = false; };
+    const onRainTouchStart = (e: Event) => {
       e.preventDefault(); rainMouseDown = true;
-      createSplash(e.touches[0].clientX, e.touches[0].clientY);
-    }, { passive: false });
-    canvas.addEventListener('touchmove', (e) => {
+      createSplash((e as TouchEvent).touches[0].clientX, (e as TouchEvent).touches[0].clientY);
+    };
+    const onRainTouchMove = (e: Event) => {
       e.preventDefault();
-      if (rainMouseDown) wipeAt(e.touches[0].clientX, e.touches[0].clientY);
-    }, { passive: false });
-    canvas.addEventListener('touchend', () => { rainMouseDown = false; });
+      if (rainMouseDown) wipeAt((e as TouchEvent).touches[0].clientX, (e as TouchEvent).touches[0].clientY);
+    };
+    const onRainTouchEnd = () => { rainMouseDown = false; };
+    canvas.addEventListener('mousedown', onRainMouseDown);
+    canvas.addEventListener('mousemove', onRainMouseMove);
+    canvas.addEventListener('mouseup', onRainMouseUp);
+    canvas.addEventListener('touchstart', onRainTouchStart, { passive: false });
+    canvas.addEventListener('touchmove', onRainTouchMove, { passive: false });
+    canvas.addEventListener('touchend', onRainTouchEnd);
+    interactiveListeners.push(
+      ['mousedown', onRainMouseDown],
+      ['mousemove', onRainMouseMove],
+      ['mouseup', onRainMouseUp],
+      ['touchstart', onRainTouchStart],
+      ['touchmove', onRainTouchMove],
+      ['touchend', onRainTouchEnd],
+    );
   }
 
   let rafId = requestAnimationFrame(render);
@@ -883,5 +891,14 @@ export function initRainOnGlass(canvas: HTMLCanvasElement, opts?: RainOnGlassOpt
     cancelAnimationFrame(rafId);
     window.removeEventListener('resize', resize);
     document.removeEventListener('visibilitychange', onVisibilityChange);
+    for (const [type, listener] of interactiveListeners) {
+      canvas.removeEventListener(type, listener);
+    }
+    gl.deleteTexture(waterTex);
+    gl.deleteTexture(shineTex);
+    gl.deleteTexture(fgTex);
+    gl.deleteTexture(bgTex);
+    gl.deleteBuffer(posBuffer);
+    gl.deleteProgram(prog);
   };
 }

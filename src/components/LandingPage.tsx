@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FILTER_MANIFESTS } from "../filters/filter-registry";
 import { initDigitalRain } from "../utils/digital-rain";
 import { initRainOnGlass } from "../utils/rain-on-glass";
@@ -38,6 +38,17 @@ const SHADERS: { value: ShaderType; label: string }[] = [
 ];
 
 
+const LANDING_STYLES = `
+  @keyframes orb-1 { 0%,100%{transform:translate(0,0)scale(1)} 33%{transform:translate(40px,-50px)scale(1.08)} 66%{transform:translate(-30px,30px)scale(0.92)} }
+  @keyframes orb-2 { 0%,100%{transform:translate(0,0)scale(1)} 33%{transform:translate(-40px,40px)scale(0.92)} 66%{transform:translate(40px,-40px)scale(1.08)} }
+  @keyframes orb-3 { 0%,100%{transform:translate(0,0)scale(1)} 50%{transform:translate(30px,40px)scale(1.04)} }
+  [data-shader="true"] nav .text-neutral-500 { color: #d4d4d4 !important; text-shadow: 0 1px 4px rgba(0,0,0,0.5) !important; }
+  [data-shader="true"] section .text-neutral-300 { color: #f5f5f5 !important; text-shadow: 0 1px 4px rgba(0,0,0,0.5) !important; }
+  [data-shader="true"] section .text-neutral-500 { color: #d4d4d4 !important; text-shadow: 0 1px 4px rgba(0,0,0,0.5) !important; }
+  [data-shader="true"] section .text-neutral-600 { color: #a3a3a3 !important; text-shadow: 0 1px 4px rgba(0,0,0,0.5) !important; }
+  [data-shader="true"] footer { color: #737373 !important; text-shadow: 0 1px 4px rgba(0,0,0,0.5) !important; }
+`;
+
 const shaderInits: Partial<Record<ShaderType, (canvas: HTMLCanvasElement) => () => void>> = {
   'digital-rain': (c) => initDigitalRain(c, { interactive: false, darkness: 0.6 }),
   'rain-on-glass': (c) => initRainOnGlass(c, { interactive: false, darkness: 0.65 }),
@@ -61,6 +72,20 @@ export function LandingPage({ onLaunch }: LandingPageProps) {
   useEffect(() => { setMounted(true); }, []);
 
   const shaderEnabled = activeShader !== 'off';
+  const filterGrid = useMemo(() => FILTER_MANIFESTS.map((m, i) => (
+    <div
+      key={m.type}
+      className={`reveal stagger-${(i % 3) + 1} flex items-center gap-3 border rounded-lg px-4 py-3 transition-all duration-300 group ${shaderEnabled ? 'bg-neutral-950/2 backdrop-blur-lg border-neutral-800/20 hover:border-neutral-700/40 shadow-lg shadow-black/20' : 'bg-transparent border-neutral-800/70 hover:border-neutral-700 hover:bg-neutral-900/30'}`}
+    >
+      <div className={`w-8 h-8 rounded-md bg-gradient-to-br ${m.landingGradient ?? 'from-neutral-800/60 to-neutral-900/60'} shrink-0`} />
+      <div className="min-w-0">
+        <div className="text-sm font-medium text-neutral-300 group-hover:text-neutral-200 transition-colors truncate">
+          {m.label}
+        </div>
+        <div className="text-[11px] font-mono text-neutral-600 tracking-wide truncate">{m.category}</div>
+      </div>
+    </div>
+  )), [shaderEnabled]);
 
   useEffect(() => {
     const isWebgl = activeShader !== 'off' && activeShader !== 'digital-rain';
@@ -136,16 +161,7 @@ export function LandingPage({ onLaunch }: LandingPageProps) {
         ref={canvasWebglRef}
         className={`fixed inset-0 w-full h-full pointer-events-none z-[1] transition-opacity duration-700 ${shaderEnabled && activeShader !== 'digital-rain' ? 'opacity-100' : 'opacity-0'}`}
       />
-      <style>{`
-        @keyframes orb-1 { 0%,100%{transform:translate(0,0)scale(1)} 33%{transform:translate(40px,-50px)scale(1.08)} 66%{transform:translate(-30px,30px)scale(0.92)} }
-        @keyframes orb-2 { 0%,100%{transform:translate(0,0)scale(1)} 33%{transform:translate(-40px,40px)scale(0.92)} 66%{transform:translate(40px,-40px)scale(1.08)} }
-        @keyframes orb-3 { 0%,100%{transform:translate(0,0)scale(1)} 50%{transform:translate(30px,40px)scale(1.04)} }
-        [data-shader="true"] nav .text-neutral-500 { color: #d4d4d4 !important; text-shadow: 0 1px 4px rgba(0,0,0,0.5) !important; }
-        [data-shader="true"] section .text-neutral-300 { color: #f5f5f5 !important; text-shadow: 0 1px 4px rgba(0,0,0,0.5) !important; }
-        [data-shader="true"] section .text-neutral-500 { color: #d4d4d4 !important; text-shadow: 0 1px 4px rgba(0,0,0,0.5) !important; }
-        [data-shader="true"] section .text-neutral-600 { color: #a3a3a3 !important; text-shadow: 0 1px 4px rgba(0,0,0,0.5) !important; }
-        [data-shader="true"] footer { color: #737373 !important; text-shadow: 0 1px 4px rgba(0,0,0,0.5) !important; }
-      `}</style>
+      <style>{LANDING_STYLES}</style>
 
       <nav className="relative z-10 mx-auto pt-5 px-5 max-w-6xl">
             <div ref={navCardRef} className={`${shaderEnabled ? 'bg-neutral-950/2 backdrop-blur-lg border-neutral-800/20 shadow-xl shadow-black/30' : 'bg-transparent border-neutral-800/80'} border rounded-xl transition-all duration-300`}>
@@ -295,20 +311,7 @@ export function LandingPage({ onLaunch }: LandingPageProps) {
           <p className="text-sm text-neutral-600 mt-2 font-sans reveal stagger-3">Every filter available in Spectra Studio</p>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {FILTER_MANIFESTS.map((m, i) => (
-            <div
-              key={m.type}
-              className={`reveal stagger-${(i % 3) + 1} flex items-center gap-3 border rounded-lg px-4 py-3 transition-all duration-300 group ${shaderEnabled ? 'bg-neutral-950/2 backdrop-blur-lg border-neutral-800/20 hover:border-neutral-700/40 shadow-lg shadow-black/20' : 'bg-transparent border-neutral-800/70 hover:border-neutral-700 hover:bg-neutral-900/30'}`}
-            >
-              <div className={`w-8 h-8 rounded-md bg-gradient-to-br ${m.landingGradient ?? 'from-neutral-800/60 to-neutral-900/60'} shrink-0`} />
-              <div className="min-w-0">
-                <div className="text-sm font-medium text-neutral-300 group-hover:text-neutral-200 transition-colors truncate">
-                  {m.label}
-                </div>
-                <div className="text-[11px] font-mono text-neutral-600 tracking-wide truncate">{m.category}</div>
-              </div>
-            </div>
-          ))}
+          {filterGrid}
         </div>
       </section>
 

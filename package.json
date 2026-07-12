@@ -20,7 +20,6 @@
     "@fontsource/instrument-serif": "^5.2.8",
     "@fontsource/jetbrains-mono": "^5.2.8",
     "@iconify-json/lucide": "^1.2.0",
-    "@types/node": "^25.3.3",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@unocss/preset-icons": "^66.1.0-beta.6",

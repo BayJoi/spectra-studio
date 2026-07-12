@@ -82,9 +82,18 @@ export function BottomPanel() {
     };
   }, [dropdownOpen, presetOpen, setDropdownOpen, setPresetOpen]);
 
+  const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) setImageUrl(file);
+    if (file) {
+      if (file.size > MAX_FILE_SIZE) {
+        alert('File too large. Maximum size is 100MB.');
+        e.target.value = "";
+        return;
+      }
+      setImageUrl(file);
+    }
     e.target.value = "";
   };
 

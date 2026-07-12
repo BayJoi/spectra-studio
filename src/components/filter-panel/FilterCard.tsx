@@ -1,17 +1,16 @@
-import { useRef, useState } from "react";
+import { memo, useRef, useState } from "react";
 import { useAtomValue, useSetAtom } from "jotai";
 import {
-  filtersAtom,
   selectedFilterIdAtom,
   updateFilterParamAtom,
+  updateFilterParamWithHistoryAtom,
   toggleFilterAtom,
   toggleLockFilterAtom,
   removeFilterAtom,
   moveFilterUpAtom,
   moveFilterDownAtom,
   jotaiStore,
-  pastFiltersAtom,
-  futureFiltersAtom,
+  pushHistoryAtom,
 } from "../../store/atoms";
 import type { FilterData } from "../../store/atoms";
 import { filterManifestByType } from "../../filters/filter-registry";
@@ -43,7 +42,7 @@ interface FilterCardProps {
   preDragFiltersRef: React.MutableRefObject<FilterData[] | null>;
 }
 
-export function FilterCard({
+export const FilterCard = memo(function FilterCard({
   filter, idx, total, isCollapsed, isDragOver,
   onToggleCollapse, onDragStart, onDragEnd, onDragEnter, onDragLeave, onDrop,
   preDragFiltersRef,
@@ -51,6 +50,8 @@ export function FilterCard({
   const selectedId = useAtomValue(selectedFilterIdAtom);
   const setSelectedId = useSetAtom(selectedFilterIdAtom);
   const updateFilterParam = useSetAtom(updateFilterParamAtom);
+  const updateParamWithHistory = useSetAtom(updateFilterParamWithHistoryAtom);
+  const pushHistory = useSetAtom(pushHistoryAtom);
   const toggleFilter = useSetAtom(toggleFilterAtom);
   const toggleLock = useSetAtom(toggleLockFilterAtom);
   const removeFilter = useSetAtom(removeFilterAtom);
@@ -157,10 +158,7 @@ export function FilterCard({
                           const raw = (e.target as HTMLInputElement).value;
                           const num = parseFloat(raw);
                           if (!isNaN(num)) {
-                            const pre = jotaiStore.get(filtersAtom);
-                            updateFilterParam(filter.id, key, clampAndSnap(num, config.min, config.max, config.step));
-                            jotaiStore.set(pastFiltersAtom, [...jotaiStore.get(pastFiltersAtom), pre].slice(-30));
-                            jotaiStore.set(futureFiltersAtom, []);
+                            updateParamWithHistory(filter.id, key, clampAndSnap(num, config.min, config.max, config.step));
                           }
                           editCommittedRef.current = true;
                           setEditingValue(null);
@@ -176,10 +174,7 @@ export function FilterCard({
                         const raw = e.target.value;
                         const num = parseFloat(raw);
                         if (!isNaN(num)) {
-                          const pre = jotaiStore.get(filtersAtom);
-                          updateFilterParam(filter.id, key, clampAndSnap(num, config.min, config.max, config.step));
-                          jotaiStore.set(pastFiltersAtom, [...jotaiStore.get(pastFiltersAtom), pre].slice(-30));
-                          jotaiStore.set(futureFiltersAtom, []);
+                          updateParamWithHistory(filter.id, key, clampAndSnap(num, config.min, config.max, config.step));
                         }
                         setEditingValue(null);
                       }}
@@ -202,9 +197,7 @@ export function FilterCard({
                   onPointerDown={() => { preDragFiltersRef.current = jotaiStore.get(filtersAtom); }}
                   onPointerUp={() => {
                     if (preDragFiltersRef.current) {
-                      const past = jotaiStore.get(pastFiltersAtom);
-                      jotaiStore.set(pastFiltersAtom, [...past, preDragFiltersRef.current].slice(-30));
-                      jotaiStore.set(futureFiltersAtom, []);
+                      pushHistory(preDragFiltersRef.current);
                       preDragFiltersRef.current = null;
                     }
                   }}
@@ -247,4 +240,4 @@ export function FilterCard({
       </CollapsibleSection>
     </div>
   );
-}
+});

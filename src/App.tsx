@@ -5,8 +5,6 @@ import { initFromUrlHash } from "./store/atoms";
 
 const LazyEditorLayout = lazy(() => import("./components/EditorLayout").then(m => ({ default: m.EditorLayout })));
 
-const editorChunkPromise = import("./components/EditorLayout");
-
 function EditorSkeleton({fadeOut}: {fadeOut: boolean}) {
   const [visible, setVisible] = useState(false);
   useEffect(() => { requestAnimationFrame(() => requestAnimationFrame(() => setVisible(true))); }, []);
@@ -75,10 +73,6 @@ export default function App() {
     });
     obs.observe(document.body, { childList: true, subtree: true });
     return () => { obs.disconnect(); timers.forEach(t => window.clearTimeout(t)); };
-  }, []);
-
-  useEffect(() => {
-    editorChunkPromise.catch(() => {});
   }, []);
 
   const launch = () => {

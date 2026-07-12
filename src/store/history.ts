@@ -7,7 +7,7 @@ export const undoAtom = atom(null, (get: any, set: any) => {
   const past = get(pastFiltersAtom);
   if (past.length === 0) return;
   const prev = past[past.length - 1];
-  set(futureFiltersAtom, [...get(futureFiltersAtom), get(filtersAtom)]);
+  set(futureFiltersAtom, [...get(futureFiltersAtom), get(filtersAtom)].slice(-30));
   set(pastFiltersAtom, past.slice(0, -1));
   set(filtersAtom, prev);
   const selectedId = get(selectedFilterIdAtom);
@@ -21,7 +21,7 @@ export const redoAtom = atom(null, (get: any, set: any) => {
   const future = get(futureFiltersAtom);
   if (future.length === 0) return;
   const next = future[0];
-  set(pastFiltersAtom, [...get(pastFiltersAtom), get(filtersAtom)]);
+  set(pastFiltersAtom, [...get(pastFiltersAtom), get(filtersAtom)].slice(-30));
   set(futureFiltersAtom, future.slice(1));
   set(filtersAtom, next);
   const selectedId = get(selectedFilterIdAtom);

@@ -348,7 +348,8 @@ export function initHologramGlitch(canvas: HTMLCanvasElement, opts?: HologramGli
     gl.uniform2f(uRes, canvas.width, canvas.height);
   }
 
-  window.addEventListener('resize', () => { needsResize = true; });
+  const onResize = () => { needsResize = true; };
+  window.addEventListener('resize', onResize);
 
   resize();
 
@@ -381,12 +382,14 @@ export function initHologramGlitch(canvas: HTMLCanvasElement, opts?: HologramGli
 
   return () => {
     cancelAnimationFrame(rafId);
-    window.removeEventListener('resize', resize);
+    window.removeEventListener('resize', onResize);
     document.removeEventListener('visibilitychange', onVisibilityChange);
     canvas.removeEventListener('mousemove', onMouseMove);
     canvas.removeEventListener('mouseleave', onMouseLeave);
     canvas.removeEventListener('touchstart', onTouchStart);
     canvas.removeEventListener('touchmove', onTouchMove);
     canvas.removeEventListener('touchend', onTouchEnd);
+    gl.deleteProgram(prog);
+    gl.deleteBuffer(buf);
   };
 }

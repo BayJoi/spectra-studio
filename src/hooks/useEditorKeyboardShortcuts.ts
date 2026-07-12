@@ -1,11 +1,6 @@
-import { useEffect, useRef } from "react";
-import { useAtomValue, useSetAtom } from "jotai";
+import { useEffect } from "react";
+import { useSetAtom } from "jotai";
 import {
-  filtersAtom,
-  selectedFilterIdAtom,
-  presetBrowserOpenAtom,
-  effectBrowserOpenAtom,
-  imageUrlAtom,
   undoAtom,
   redoAtom,
   removeFilterAtom,
@@ -15,16 +10,16 @@ import {
   setPresetBrowserOpenAtom,
   setEffectBrowserOpenAtom,
   renderScaleAtom,
+  jotaiStore,
+  filtersAtom,
+  selectedFilterIdAtom,
+  presetBrowserOpenAtom,
+  effectBrowserOpenAtom,
+  imageUrlAtom,
 } from "../store/atoms";
 import { RENDER_SCALES } from "../constants";
 
 export function useEditorKeyboardShortcuts(setBeforeAfter: (fn: (v: boolean) => boolean) => void) {
-  const filters = useAtomValue(filtersAtom);
-  const selectedId = useAtomValue(selectedFilterIdAtom);
-  const presetOpen = useAtomValue(presetBrowserOpenAtom);
-  const effectOpen = useAtomValue(effectBrowserOpenAtom);
-  const renderScale = useAtomValue(renderScaleAtom);
-  const imageUrl = useAtomValue(imageUrlAtom);
   const undo = useSetAtom(undoAtom);
   const redo = useSetAtom(redoAtom);
   const removeFilter = useSetAtom(removeFilterAtom);
@@ -35,31 +30,15 @@ export function useEditorKeyboardShortcuts(setBeforeAfter: (fn: (v: boolean) => 
   const setEffectOpen = useSetAtom(setEffectBrowserOpenAtom);
   const setRenderScale = useSetAtom(renderScaleAtom);
 
-  const filtersRef = useRef(filters);
-  // eslint-disable-next-line react-hooks/refs -- intentional: keep ref fresh for event handlers
-  filtersRef.current = filters;
-  const selectedIdRef = useRef(selectedId);
-  // eslint-disable-next-line react-hooks/refs -- intentional: keep ref fresh for event handlers
-  selectedIdRef.current = selectedId;
-  const presetOpenRef = useRef(presetOpen);
-  // eslint-disable-next-line react-hooks/refs -- intentional: keep ref fresh for event handlers
-  presetOpenRef.current = presetOpen;
-  const effectOpenRef = useRef(effectOpen);
-  // eslint-disable-next-line react-hooks/refs -- intentional: keep ref fresh for event handlers
-  effectOpenRef.current = effectOpen;
-  const renderScaleRef = useRef(renderScale);
-  // eslint-disable-next-line react-hooks/refs -- intentional: keep ref fresh for event handlers
-  renderScaleRef.current = renderScale;
-  const imageUrlRef = useRef(imageUrl);
-  // eslint-disable-next-line react-hooks/refs -- intentional: keep ref fresh for event handlers
-  imageUrlRef.current = imageUrl;
-
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
       const tag = target.tagName;
       const type = (target as HTMLInputElement).type;
       const isTyping = tag === "TEXTAREA" || (tag === "INPUT" && type !== "range");
+
+      const filters = jotaiStore.get(filtersAtom);
+      const selectedId = jotaiStore.get(selectedFilterIdAtom);
 
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "z") {
         if (isTyping) return;
@@ -85,9 +64,9 @@ export function useEditorKeyboardShortcuts(setBeforeAfter: (fn: (v: boolean) => 
       if (isTyping) return;
 
       if (e.key === "Delete" || e.key === "Backspace") {
-        if (selectedIdRef.current) {
+        if (selectedId) {
           e.preventDefault();
-          removeFilter(selectedIdRef.current);
+          removeFilter(selectedId);
         }
         return;
       }
@@ -101,31 +80,33 @@ export function useEditorKeyboardShortcuts(setBeforeAfter: (fn: (v: boolean) => 
       if (e.ctrlKey || e.metaKey) return;
 
       switch (e.key.toLowerCase()) {
-        case 'c':
-          if (!imageUrlRef.current || filtersRef.current.length === 0) break;
+        case 'c': {
+          const imageUrl = jotaiStore.get(imageUrlAtom);
+          if (!imageUrl || filters.length === 0) break;
           e.preventDefault();
           setBeforeAfter(v => !v);
           break;
+        }
         case 'd':
           e.preventDefault();
-          batchToggle(filtersRef.current.map(f => f.id));
+          batchToggle(filters.map(f => f.id));
           break;
         case 'p':
           e.preventDefault();
-          setPresetOpen(!presetOpenRef.current);
+          setPresetOpen(!jotaiStore.get(presetBrowserOpenAtom));
           break;
         case 'e':
           e.preventDefault();
-          setEffectOpen(!effectOpenRef.current);
+          setEffectOpen(!jotaiStore.get(effectBrowserOpenAtom));
           break;
         case 'l':
           e.preventDefault();
-          if (selectedIdRef.current) toggleLock(selectedIdRef.current);
+          if (selectedId) toggleLock(selectedId);
           break;
         case 'r':
           e.preventDefault();
           {
-            const currentIdx = RENDER_SCALES.findIndex(s => s.value === renderScaleRef.current);
+            const currentIdx = RENDER_SCALES.findIndex(s => s.value === jotaiStore.get(renderScaleAtom));
             const nextIdx = (currentIdx + 1) % RENDER_SCALES.length;
             setRenderScale(RENDER_SCALES[nextIdx].value);
           }

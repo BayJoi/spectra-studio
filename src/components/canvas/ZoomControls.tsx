@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 interface ZoomControlsProps {
   scale: number;
   onZoomIn: () => void;
@@ -5,7 +7,7 @@ interface ZoomControlsProps {
   onReset: () => void;
 }
 
-export function ZoomControls({ scale, onZoomIn, onZoomOut, onReset }: ZoomControlsProps) {
+export const ZoomControls = memo(function ZoomControls({ scale, onZoomIn, onZoomOut, onReset }: ZoomControlsProps) {
   return (
     <div className="absolute bottom-3 left-3 flex items-center gap-2 bg-neutral-900/90 border border-neutral-800 rounded-lg p-2 z-20 animate-fade-in">
       <div className="flex items-center gap-2 px-2 text-xs font-mono text-neutral-500">
@@ -36,4 +38,4 @@ export function ZoomControls({ scale, onZoomIn, onZoomOut, onReset }: ZoomContro
       </button>
     </div>
   );
-}
+});

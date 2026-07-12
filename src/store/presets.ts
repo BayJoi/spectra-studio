@@ -4,10 +4,28 @@ import type { FilterType } from "../filters/filter-registry";
 import type { CustomPreset } from "./types";
 import { uuid } from "./types";
 
+function isValidPreset(obj: unknown): obj is CustomPreset {
+  if (!obj || typeof obj !== 'object') return false;
+  const p = obj as Record<string, unknown>;
+  if (typeof p.name !== 'string' || p.name.length === 0 || p.name.length > 100) return false;
+  if (!Array.isArray(p.filters)) return false;
+  return p.filters.every((f: unknown) => {
+    if (!f || typeof f !== 'object') return false;
+    const fd = f as Record<string, unknown>;
+    if (typeof fd.type !== 'string') return false;
+    if (typeof fd.enabled !== 'boolean') return false;
+    if (!fd.params || typeof fd.params !== 'object') return false;
+    return true;
+  });
+}
+
 function loadCustomPresetsFromStorage(): CustomPreset[] {
   try {
     const raw = localStorage.getItem("spectra-custom-presets");
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(isValidPreset);
   } catch {
     return [];
   }

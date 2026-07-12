@@ -7,6 +7,14 @@ import { filterManifestByType } from '../filters/filter-registry';
 
 const MAX_DIMENSION = 16384;
 
+function createOffscreenCanvas(w: number, h: number): OffscreenCanvas | HTMLCanvasElement {
+  if (typeof OffscreenCanvas !== 'undefined') return new OffscreenCanvas(w, h);
+  const c = document.createElement('canvas');
+  c.width = w;
+  c.height = h;
+  return c;
+}
+
 interface RenderTarget {
   fbo: WebGLFramebuffer;
   texture: WebGLTexture;
@@ -76,7 +84,7 @@ export class EffectEngine {
     this.targetB = this._makeRT(this.width, this.height);
 
     if (this.sourceImage && this._renderScale < 1.0) {
-      const offscreen = new OffscreenCanvas(this.width, this.height);
+      const offscreen = createOffscreenCanvas(this.width, this.height);
       const ctx = offscreen.getContext('2d');
       if (ctx) {
         ctx.drawImage(this.sourceImage, 0, 0, this.width, this.height);
@@ -178,7 +186,7 @@ export class EffectEngine {
       if (width < 1 || height < 1) {
         throw new Error(`Image dimensions (${img.naturalWidth}x${img.naturalHeight}) exceed GPU limits (${cap}). Cannot scale down.`);
       }
-      const offscreen = new OffscreenCanvas(width, height);
+      const offscreen = createOffscreenCanvas(width, height);
       const ctx = offscreen.getContext('2d');
       if (!ctx) throw new Error('Failed to create offscreen canvas for image scaling');
       ctx.drawImage(img, 0, 0, width, height);
@@ -490,16 +498,23 @@ export class EffectEngine {
     if (this._disposed) return null;
     if (this.gl.isContextLost()) return null;
     if (this._rendering) {
-      await new Promise<void>((resolve, reject) => {
-        const start = Date.now();
-        const check = () => {
-          if (!this._rendering) { resolve(); return; }
-          if (Date.now() - start > 10000) { reject(new Error('Export timed out')); return; }
-          setTimeout(check, 16);
-        };
-        check();
-      });
+      try {
+        await new Promise<void>((resolve, reject) => {
+          const start = Date.now();
+          const check = () => {
+            if (this._disposed) { reject(new Error('Engine disposed')); return; }
+            if (!this._rendering) { resolve(); return; }
+            if (Date.now() - start > 10000) { reject(new Error('Export timed out')); return; }
+            setTimeout(check, 16);
+          };
+          check();
+        });
+      } catch {
+        return null;
+      }
     }
+
+    if (this._disposed) return null;
 
     const prevScale = this._renderScale;
     if (prevScale !== 1.0) {
@@ -508,7 +523,10 @@ export class EffectEngine {
     }
 
     if (filters) this.render(filters);
+    if (this._disposed) return null;
+
     const blob = await new Promise<Blob | null>((resolve) => {
+      if (this._disposed) { resolve(null); return; }
       this.canvas.toBlob((b) => resolve(b), mimeType, 0.95);
     });
 

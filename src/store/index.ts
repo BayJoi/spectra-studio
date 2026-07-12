@@ -1,7 +1,7 @@
 export type { FilterData, FilterType } from "./types";
 export { uuid } from "./types";
 
-export { filtersAtom, selectedFilterIdAtom, pastFiltersAtom, futureFiltersAtom, imageUrlAtom, jotaiStore } from "./core-atoms";
+export { filtersAtom, hasFiltersAtom, selectedFilterIdAtom, pastFiltersAtom, futureFiltersAtom, imageUrlAtom, jotaiStore } from "./core-atoms";
 
 export {
   effectBrowserOpenAtom,
@@ -33,6 +33,8 @@ export {
   moveFilterUpAtom,
   moveFilterDownAtom,
   reorderFiltersAtom,
+  updateFilterParamWithHistoryAtom,
+  pushHistoryAtom,
 } from "./filter-actions";
 
 export { undoAtom, redoAtom } from "./history";
