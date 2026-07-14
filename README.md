@@ -196,15 +196,16 @@ src/
   index.css                       # Global styles, animations, keyframes
   env.d.ts                        # TypeScript declarations for GLSL imports
 
-  components/
-    LandingPage.tsx               # Landing page with background shaders
-    EditorLayout.tsx              # Editor shell (header, export, drag-and-drop)
-    CanvasArea.tsx                # Canvas, WebGL engine mount, RAF loop, zoom/pan
-    BottomPanel.tsx               # Filter list, drag reorder, image upload
-    ErrorBoundary.tsx             # React error boundary
-    canvas/
-      ZoomControls.tsx            # Zoom in/out/reset overlay
-    filter-panel/
+   components/
+     LandingPage.tsx               # Landing page with background shaders
+     EditorLayout.tsx              # Editor shell (header, export, drag-and-drop)
+     CanvasArea.tsx                # Canvas, WebGL engine mount, RAF loop, zoom/pan
+     BottomPanel.tsx               # Filter list, drag reorder, image upload
+     ErrorBoundary.tsx             # React error boundary
+     Toast.tsx                     # Toast notification system
+     canvas/
+       ZoomControls.tsx            # Zoom in/out/reset overlay
+     filter-panel/
       EffectBrowser.tsx           # Searchable effect dropdown
       FilterCard.tsx              # Individual filter card with sliders
       PresetBrowser.tsx           # Save/load/delete custom presets
