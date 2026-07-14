@@ -19,7 +19,10 @@ import {
 } from "../store/atoms";
 import { RENDER_SCALES } from "../constants";
 
-export function useEditorKeyboardShortcuts(setBeforeAfter: (fn: (v: boolean) => boolean) => void) {
+export function useEditorKeyboardShortcuts(
+  setBeforeAfter: (fn: (v: boolean) => boolean) => void,
+  nudgeCompareSplit?: (delta: number) => void,
+) {
   const undo = useSetAtom(undoAtom);
   const redo = useSetAtom(redoAtom);
   const removeFilter = useSetAtom(removeFilterAtom);
@@ -79,6 +82,12 @@ export function useEditorKeyboardShortcuts(setBeforeAfter: (fn: (v: boolean) => 
 
       if (e.ctrlKey || e.metaKey) return;
 
+      if (e.shiftKey && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
+        e.preventDefault();
+        nudgeCompareSplit?.(e.key === "ArrowLeft" ? -0.02 : 0.02);
+        return;
+      }
+
       switch (e.key.toLowerCase()) {
         case 'c': {
           const imageUrl = jotaiStore.get(imageUrlAtom);
@@ -115,5 +124,5 @@ export function useEditorKeyboardShortcuts(setBeforeAfter: (fn: (v: boolean) => 
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [undo, redo, removeFilter, batchToggle, toggleLock, batchLock, setPresetOpen, setEffectOpen, setBeforeAfter, setRenderScale]);
+  }, [undo, redo, removeFilter, batchToggle, toggleLock, batchLock, setPresetOpen, setEffectOpen, setBeforeAfter, setRenderScale, nudgeCompareSplit]);
 }

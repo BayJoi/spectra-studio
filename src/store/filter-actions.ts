@@ -105,6 +105,41 @@ export const removeFilterAtom = atom(null, (get: any, set: any, filterId: string
 });
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const duplicateFilterAtom = atom(null, (get: any, set: any, filterId: string) => {
+  pushToPast(get, set);
+  const filters: FilterData[] = get(filtersAtom);
+  const idx = filters.findIndex((f: FilterData) => f.id === filterId);
+  if (idx === -1) return;
+  const src = filters[idx];
+  const copy: FilterData = {
+    id: uuid(),
+    type: src.type,
+    params: { ...src.params },
+    enabled: src.enabled,
+    locked: false,
+  };
+  const next = [...filters];
+  next.splice(idx + 1, 0, copy);
+  set(filtersAtom, next);
+  set(selectedFilterIdAtom, copy.id);
+});
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const resetFilterParamsAtom = atom(null, (get: any, set: any, filterId: string) => {
+  const pre = get(filtersAtom);
+  const manifest = filterManifestByType.get(pre.find((f: FilterData) => f.id === filterId)?.type ?? '');
+  if (!manifest) return;
+  set(
+    filtersAtom,
+    pre.map((f: FilterData) =>
+      f.id === filterId ? { ...f, params: { ...manifest.defaultParams } } : f,
+    ),
+  );
+  set(pastFiltersAtom, [...get(pastFiltersAtom), pre].slice(-MAX_HISTORY));
+  set(futureFiltersAtom, []);
+});
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const moveFilterUpAtom = atom(null, (get: any, set: any, filterId: string) => {
   pushToPast(get, set);
   const filters = [...get(filtersAtom)];
@@ -131,9 +166,9 @@ export const reorderFiltersAtom = atom(null, (get: any, set: any, filters: Filte
 });
 
 // Batches updateFilterParam + history clear into a single atom write → 1 re-render instead of 3
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const updateFilterParamWithHistoryAtom = atom(
   null,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (get: any, set: any, filterId: string, param: string, value: number) => {
     const pre = get(filtersAtom);
     set(

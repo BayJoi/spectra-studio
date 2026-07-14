@@ -218,7 +218,6 @@ input[type="range"]:disabled::-moz-range-thumb {
   .hero-entrance {
     animation: hero-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
-  .hero-delay-1 { animation-delay: 0.1s; opacity: 0; }
   .hero-delay-2 { animation-delay: 0.2s; opacity: 0; }
   .stagger-1 { animation-delay: 0.1s; }
   .stagger-2 { animation-delay: 0.2s; }
@@ -312,7 +311,7 @@ input[type="range"]:disabled::-moz-range-thumb {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  .reveal, .revealed, .hero-entrance {
+  .reveal, .hero-entrance {
     opacity: 1 !important;
     transform: none !important;
     animation: none !important;

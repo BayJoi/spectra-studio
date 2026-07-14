@@ -494,7 +494,7 @@ export class EffectEngine {
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }
 
-  async exportBlob(filters?: FilterData[], mimeType = 'image/png'): Promise<Blob | null> {
+  async exportBlob(filters?: FilterData[], mimeType = 'image/png', quality?: number): Promise<Blob | null> {
     if (this._disposed) return null;
     if (this.gl.isContextLost()) return null;
     if (this._rendering) {
@@ -527,7 +527,7 @@ export class EffectEngine {
 
     const blob = await new Promise<Blob | null>((resolve) => {
       if (this._disposed) { resolve(null); return; }
-      this.canvas.toBlob((b) => resolve(b), mimeType, 0.95);
+      this.canvas.toBlob((b) => resolve(b), mimeType, quality);
     });
 
     if (prevScale !== 1.0) {

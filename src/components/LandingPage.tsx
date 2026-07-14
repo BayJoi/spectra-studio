@@ -18,6 +18,7 @@ const FEATURES = [
 const SHORTCUTS = [
   { key: "Ctrl+Z", action: "Undo last change" },
   { key: "Ctrl+Y", action: "Redo last change" },
+  { key: "Ctrl+V", action: "Paste image from clipboard" },
   { key: "Delete / Backspace", action: "Remove selected filter" },
   { key: "C", action: "Toggle compare mode" },
   { key: "D", action: "Toggle all effects" },
@@ -26,6 +27,7 @@ const SHORTCUTS = [
   { key: "L", action: "Lock/unlock selected effect" },
   { key: "Ctrl+L", action: "Lock/unlock all effects" },
   { key: "R", action: "Cycle render scale" },
+  { key: "Shift+← / Shift+→", action: "Nudge compare split" },
 ];
 
 type ShaderType = 'off' | 'digital-rain' | 'rain-on-glass' | 'hologram-glitch' | 'sequin-wave';
@@ -75,6 +77,7 @@ export function LandingPage({ onLaunch }: LandingPageProps) {
   const filterGrid = useMemo(() => FILTER_MANIFESTS.map((m, i) => (
     <div
       key={m.type}
+      title={m.description}
       className={`reveal stagger-${(i % 3) + 1} flex items-center gap-3 border rounded-lg px-4 py-3 transition-all duration-300 group ${shaderEnabled ? 'bg-neutral-950/2 backdrop-blur-lg border-neutral-800/20 hover:border-neutral-700/40 shadow-lg shadow-black/20' : 'bg-transparent border-neutral-800/70 hover:border-neutral-700 hover:bg-neutral-900/30'}`}
     >
       <div className={`w-8 h-8 rounded-md bg-gradient-to-br ${m.landingGradient ?? 'from-neutral-800/60 to-neutral-900/60'} shrink-0`} />

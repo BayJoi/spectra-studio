@@ -12,6 +12,7 @@ import {
   setEffectBrowserOpenAtom,
   setPresetBrowserOpenAtom,
   setImageUrlAtom,
+  addToastAtom,
 } from "../store/atoms";
 import type { FilterData } from "../store/atoms";
 import { FilterCard } from "./filter-panel/FilterCard";
@@ -31,6 +32,7 @@ export function BottomPanel() {
   const presetOpen = useAtomValue(presetBrowserOpenAtom);
   const setPresetOpen = useSetAtom(setPresetBrowserOpenAtom);
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set());
+  const addToast = useSetAtom(addToastAtom);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const presetRef = useRef<HTMLDivElement>(null);
@@ -88,7 +90,7 @@ export function BottomPanel() {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > MAX_FILE_SIZE) {
-        alert('File too large. Maximum size is 100MB.');
+        addToast('File too large. Maximum size is 100MB.', 'error');
         e.target.value = "";
         return;
       }

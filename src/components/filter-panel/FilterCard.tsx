@@ -1,16 +1,20 @@
 import { memo, useRef, useState } from "react";
 import { useAtomValue, useSetAtom } from "jotai";
 import {
+  filtersAtom,
   selectedFilterIdAtom,
   updateFilterParamAtom,
   updateFilterParamWithHistoryAtom,
   toggleFilterAtom,
   toggleLockFilterAtom,
   removeFilterAtom,
+  duplicateFilterAtom,
+  resetFilterParamsAtom,
   moveFilterUpAtom,
   moveFilterDownAtom,
   jotaiStore,
   pushHistoryAtom,
+  addToastAtom,
 } from "../../store/atoms";
 import type { FilterData } from "../../store/atoms";
 import { filterManifestByType } from "../../filters/filter-registry";
@@ -55,6 +59,9 @@ export const FilterCard = memo(function FilterCard({
   const toggleFilter = useSetAtom(toggleFilterAtom);
   const toggleLock = useSetAtom(toggleLockFilterAtom);
   const removeFilter = useSetAtom(removeFilterAtom);
+  const duplicateFilter = useSetAtom(duplicateFilterAtom);
+  const resetFilterParams = useSetAtom(resetFilterParamsAtom);
+  const addToast = useSetAtom(addToastAtom);
   const moveFilterUp = useSetAtom(moveFilterUpAtom);
   const moveFilterDown = useSetAtom(moveFilterDownAtom);
 
@@ -104,7 +111,8 @@ export const FilterCard = memo(function FilterCard({
         >
           <div className="i-lucide-grip-vertical text-14px" />
         </div>
-        <span className="text-xs font-medium text-neutral-300 flex-1">{manifest.label}</span>
+        <span className="text-xs font-medium text-neutral-300 flex-1" title={manifest.description}>{manifest.label}</span>
+        <span className="text-[10px] font-mono text-neutral-600 tracking-wide hidden sm:inline mr-1">{manifest.category}</span>
         <button
           onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); onToggleCollapse(filter.id); }}
           className="w-7 h-7 rounded-md flex items-center justify-center transition-all duration-150 cursor-pointer hover:scale-105 active:scale-95 text-neutral-600 hover:text-neutral-400 hover:bg-neutral-800"
@@ -126,6 +134,13 @@ export const FilterCard = memo(function FilterCard({
           {filter.locked ? <div className="i-lucide-lock text-13px" /> : <div className="i-lucide-unlock text-13px" />}
         </button>
         <button
+          onClick={(e) => { e.stopPropagation(); duplicateFilter(filter.id); const newId = jotaiStore.get(selectedFilterIdAtom); if (newId) onToggleCollapse(newId); addToast('Filter duplicated', 'success'); }}
+          onMouseDown={(e) => e.stopPropagation()}
+          className="w-7 h-7 rounded-md flex items-center justify-center text-neutral-600 hover:text-neutral-400 hover:bg-neutral-800 hover:scale-105 active:scale-95 transition-all duration-150 opacity-40 group-hover:opacity-100 cursor-pointer"
+        >
+          <div className="i-lucide-copy text-13px" />
+        </button>
+        <button
           onClick={(e) => { e.stopPropagation(); removeFilter(filter.id); }}
           onMouseDown={(e) => e.stopPropagation()}
           className="w-7 h-7 rounded-md flex items-center justify-center text-neutral-600 hover:text-red-400 hover:bg-red-400/10 hover:scale-105 active:scale-95 transition-all duration-150 opacity-40 group-hover:opacity-100 cursor-pointer"
@@ -135,6 +150,7 @@ export const FilterCard = memo(function FilterCard({
       </div>
       <CollapsibleSection collapsed={isCollapsedCard}>
         <div className="px-3 pb-3 pt-1 border-t border-neutral-800 space-y-3">
+          <p className="text-[11px] text-neutral-600 leading-relaxed">{manifest.description}</p>
           {Object.entries(manifest.paramConfigs).map(([key, config]) => {
             const val = filter.params[key] ?? manifest.defaultParams[key] ?? 0;
             const isLog = config.logarithmic;
@@ -234,6 +250,35 @@ export const FilterCard = memo(function FilterCard({
               className="flex-1 py-1.5 rounded-md bg-neutral-800 text-neutral-500 text-xs hover:bg-neutral-700 hover:text-neutral-300 hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:scale-100 disabled:cursor-not-allowed transition-all duration-150 cursor-pointer"
             >
               ↓ Down
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                const randomized: Record<string, number> = {};
+                for (const [key, config] of Object.entries(manifest.paramConfigs)) {
+                  randomized[key] = config.logarithmic
+                    ? Math.exp(Math.log(config.min) + Math.random() * Math.log(config.max / config.min))
+                    : Math.round((config.min + Math.random() * (config.max - config.min)) / config.step) * config.step;
+                }
+                resetFilterParams(filter.id);
+                for (const [key, val] of Object.entries(randomized)) {
+                  updateFilterParam(filter.id, key, val);
+                }
+                addToast('Params randomized', 'info');
+              }}
+              disabled={filter.locked}
+              className="py-1.5 px-2 rounded-md bg-neutral-800 text-neutral-500 text-xs hover:bg-neutral-700 hover:text-neutral-300 hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:scale-100 disabled:cursor-not-allowed transition-all duration-150 cursor-pointer"
+              title="Randomize all parameters"
+            >
+              <div className="i-lucide-dices text-13px" />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); resetFilterParams(filter.id); addToast('Filter reset', 'info'); }}
+              disabled={filter.locked}
+              className="py-1.5 px-2 rounded-md bg-neutral-800 text-neutral-500 text-xs hover:bg-neutral-700 hover:text-neutral-300 hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:scale-100 disabled:cursor-not-allowed transition-all duration-150 cursor-pointer"
+              title="Reset to defaults"
+            >
+              <div className="i-lucide-rotate-ccw text-13px" />
             </button>
           </div>
         </div>

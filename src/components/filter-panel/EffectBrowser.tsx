@@ -83,7 +83,8 @@ export function EffectBrowser({ onFilterAdded }: EffectBrowserProps) {
                         onClick={() => handleSelectFilter(manifest.type)}
                         className="w-full text-left px-3 py-2 text-sm text-neutral-300 hover:bg-neutral-800 hover:text-white hover:scale-[1.02] active:scale-[0.98] transition-all duration-150 cursor-pointer rounded-lg"
                       >
-                        {highlightMatch(manifest.label, searchQuery)}
+                        <div>{highlightMatch(manifest.label, searchQuery)}</div>
+                        <div className="text-[10px] text-neutral-600 mt-0.5 leading-tight">{manifest.description}</div>
                       </button>
                     ))}
                   </div>

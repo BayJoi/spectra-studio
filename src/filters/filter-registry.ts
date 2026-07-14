@@ -45,6 +45,7 @@ interface FilterManifest {
   type: FilterType;
   label: string;
   category: string;
+  description: string;
   defaultParams: Record<string, number>;
   paramConfigs: Record<string, FilterParamConfig>;
   shader?: string;
@@ -61,6 +62,7 @@ const f = (v: number): UniformValue => ({ kind: '1f', v });
 export const FILTER_MANIFESTS: FilterManifest[] = [
   {
     type: 'Noise', label: 'Noise', category: 'Basic', shader: 'noise', landingGradient: 'from-orange-950/60 to-neutral-950/60',
+    description: 'Multi-octave procedural noise with monochrome and color-chroma modes.',
     defaultParams: { intensity: 0.5, scale: 1, complexity: 0, chroma: 0.5 },
     paramConfigs: {
       intensity: param('Intensity', 0, 2, 0.05),
@@ -82,6 +84,7 @@ export const FILTER_MANIFESTS: FilterManifest[] = [
   },
   {
     type: 'Pixelate', label: 'Pixelate', category: 'Retro', shader: 'pixelate', landingGradient: 'from-orange-950/50 to-yellow-950/30',
+    description: 'Blocky pixel mosaic with grid shape variants, posterization, and rotation.',
     defaultParams: { size: 10, aspect: 1, gridType: 0, posterize: 0, aa: 0, rotation: 0 },
     paramConfigs: {
       size: logParam('Cell Size', 1, 50, 1), aspect: param('Aspect', 0.1, 3, 0.1),
@@ -96,6 +99,7 @@ export const FILTER_MANIFESTS: FilterManifest[] = [
   },
   {
     type: 'Glitch', label: 'Glitch', category: 'Distortion', shader: 'glitch', isAnimated: true, landingGradient: 'from-red-950/40 to-purple-950/40',
+    description: 'Data corruption effect with RGB split, scanline artifacts, and bitcrush distortion.',
     defaultParams: { slices: 10, offset: 15, rgbSplit: 0, blockHeight: 1, direction: 0, bitCrush: 0, dataMosh: 0, glitchMode: 0, scanlineIntensity: 0, time: 0 },
     paramConfigs: {
       slices: logParam('Slices', 1, 50, 1), offset: param('Displacement', 1, 50, 1),
@@ -116,6 +120,7 @@ export const FILTER_MANIFESTS: FilterManifest[] = [
   },
   {
     type: 'Halftone', label: 'Halftone', category: 'Stylized', shader: 'halftone', landingGradient: 'from-orange-950/50 to-amber-950/30',
+    description: 'Print-style dot screen with configurable dot shape, angle, and contrast.',
     defaultParams: { size: 10, angle: 0, contrast: 0, dotShape: 0, invert: 0, dotGain: 0, softness: 0, threshold: 0.5 },
     paramConfigs: {
       size: param('Cell Size', 1, 50, 1), angle: param('Angle', 0, 360, 1),
@@ -134,6 +139,7 @@ export const FILTER_MANIFESTS: FilterManifest[] = [
   },
   {
     type: 'AsciiBeta2', label: 'ASCII', category: 'Retro', shader: 'ascii_beta_2', landingGradient: 'from-emerald-950/60 to-black/60',
+    description: 'ASCII art renderer using JetBrains Mono font atlas with edge contouring and dither.',
     defaultParams: { cellSize: 8, localContrast: 0.75, gamma: 1.2, edgeSharp: 1.3, edgeThreshold: 0.12, dither: 0.35, seed: 0, colorMode: 0, bgDark: 1, charScale: 1.0, lineSpacing: 1.0 },
     paramConfigs: {
       cellSize: param('Cell Size', 4, 64, 1),
@@ -166,6 +172,7 @@ export const FILTER_MANIFESTS: FilterManifest[] = [
   },
   {
     type: 'CRT', label: 'CRT Screen', category: 'Retro', shader: 'crt', landingGradient: 'from-green-950/40 to-blue-950/40',
+    description: 'CRT monitor simulation with scanlines, phosphor glow, vignetting, and screen curvature.',
     defaultParams: { lineWidth: 2, lineContrast: 0.5, noise: 0.1, vignetting: 0.3, phosphor: 0, curvature: 0, bloom: 0, colorTemp: 0 },
     paramConfigs: {
       lineWidth: param('Scanline Width', 0.1, 10, 0.1),
@@ -186,6 +193,7 @@ export const FILTER_MANIFESTS: FilterManifest[] = [
   },
   {
     type: 'ChromaticAberration', label: 'Chromatic Aberration', category: 'Distortion', shader: 'chromatic_aberration', landingGradient: 'from-cyan-950/40 to-red-950/30',
+    description: 'Lens distortion simulation with RGB channel offset, falloff curve, and rotation.',
     defaultParams: { aberrationAmount: 3, aberrationCurve: 2, aberrationAngle: 0, luminanceMask: 0 },
     paramConfigs: {
       aberrationAmount: param('Amount', 0, 15, 0.5),
@@ -202,6 +210,7 @@ export const FILTER_MANIFESTS: FilterManifest[] = [
   },
   {
     type: 'Outline', label: 'Outline', category: 'Stylized', shader: 'outline', landingGradient: 'from-neutral-900/60 to-neutral-800/60',
+    description: 'Edge detection with multiple kernel types, configurable edge width, color, and smoothness.',
     defaultParams: { thickness: 2, threshold: 0, showOriginal: 0, invertEdge: 0, kernelType: 0, edgeColor: 0, edgeWidth: 1, smoothness: 0.1 },
     paramConfigs: {
       thickness: param('Thickness', 0.1, 10, 0.1), threshold: param('Threshold', 0, 1, 0.05),
@@ -218,6 +227,7 @@ export const FILTER_MANIFESTS: FilterManifest[] = [
   },
   {
     type: 'RadialBlur', label: 'Radial Blur', category: 'Distortion', shader: 'radialblur', landingGradient: 'from-orange-950/40 to-neutral-950/60',
+    description: 'Zoom and spin blur radiating from a draggable center point on the canvas.',
     defaultParams: { radius: 10, centerX: 50, centerY: 50, quality: 0.5, blurType: 0, weightMode: 0, aspect: 1 },
     paramConfigs: {
       radius: param('Radius', 0, 100, 1), centerX: param('Center X', 0, 100, 1),
@@ -235,6 +245,7 @@ export const FILTER_MANIFESTS: FilterManifest[] = [
   },
   {
     type: 'HoloGlitch', label: 'Holo Glitch', category: 'Distortion', shader: 'hologlitch', isAnimated: true, landingGradient: 'from-purple-950/40 to-cyan-950/40',
+    description: 'Holographic distortion with hue-shift, scan jitter, and block-based noise artifacts.',
     defaultParams: { intensity: 1, split: 10, scanJitter: 0, hueShift: 0, glitchMode: 0, time: 0, noiseAmount: 0, blockSize: 32 },
     paramConfigs: {
       intensity: param('Intensity', 0, 5, 0.1), split: param('RGB Split', 0, 50, 0.1),
@@ -253,6 +264,7 @@ export const FILTER_MANIFESTS: FilterManifest[] = [
   },
   {
     type: 'Fluid', label: 'Fluid', category: 'Distortion', shader: 'fluid', isAnimated: true, landingGradient: 'from-blue-950/40 to-teal-950/40',
+    description: 'Animated fluid-like displacement with turbulence, swirl, and chroma splitting.',
     defaultParams: { amount: 0.05, scale: 3, time: 0, octaves: 4, swirl: 1, chroma: 0 },
     paramConfigs: {
       amount: param('Displacement', 0, 0.3, 0.005),
@@ -271,6 +283,7 @@ export const FILTER_MANIFESTS: FilterManifest[] = [
   },
   {
     type: 'Kaleidoscope', label: 'Kaleidoscope', category: 'Stylized', shader: 'kaleidoscope', landingGradient: 'from-pink-950/40 to-orange-950/30',
+    description: 'Mirror-reflection kaleidoscope with configurable segment count, zoom, and center.',
     defaultParams: { segments: 8, rotation: 0, zoom: 1, centerX: 50, centerY: 50, mirror: 1 },
     paramConfigs: {
       segments: param('Segments', 2, 24, 1), rotation: param('Rotation', 0, 360, 1),
@@ -286,6 +299,7 @@ export const FILTER_MANIFESTS: FilterManifest[] = [
   },
   {
     type: 'HalftoneBeta', label: 'Halftone (Beta)', category: 'Stylized', shader: 'halftone_beta', landingGradient: 'from-neutral-800/50 to-amber-950/30',
+    description: 'Multi-channel CMYK halftone with independent channel angles and mix control.',
     defaultParams: { dotSize: 1, frequency: 200, angle: 0, softness: 1, contrast: 1, invert: 0, mix: 1, shapeType: 0, colorMode: 0, chA: 15, chB: 75, chC: 0, chD: 45 },
     paramConfigs: {
       colorMode: param('Color Mode', 0, 2, 1),
@@ -314,6 +328,7 @@ export const FILTER_MANIFESTS: FilterManifest[] = [
   },
   {
     type: 'HalftoneBeta2', label: 'Halftone (Beta 2)', category: 'Stylized', shader: 'halftone_beta2', landingGradient: 'from-neutral-800/50 to-orange-950/30',
+    description: 'Simplified halftone with shape variants (circle, diamond, square, line) and sharpness.',
     defaultParams: { kind: 0, scale: 8, angle: 45, sharpness: 0.5, preserveColors: 0 },
     paramConfigs: {
       kind: param('Shape', 0, 3, 1),
@@ -332,6 +347,7 @@ export const FILTER_MANIFESTS: FilterManifest[] = [
   },
   {
     type: 'Bloom', label: 'Bloom', category: 'Stylized', landingGradient: 'from-orange-950/50 to-yellow-950/20',
+    description: 'Multi-pass glow effect with threshold extraction, gaussian blur, and intensity control.',
     defaultParams: { threshold: 0.5, intensity: 0.3, radius: 3 },
     paramConfigs: {
       threshold: param('Threshold', 0, 1, 0.01),
@@ -352,6 +368,7 @@ export const FILTER_MANIFESTS: FilterManifest[] = [
   },
   {
     type: 'DotMatrix', label: 'LED / Dot Matrix', category: 'Retro', shader: 'dotmatrix', landingGradient: 'from-neutral-900/50 to-green-950/30',
+    description: 'LED-style dot grid display with RGB subpixel rendering, glow, and gamma adjustment.',
     defaultParams: { cellSize: 8, dotSize: 0.75, gap: 0.15, glow: 0.4, subpixel: 1, gamma: 1 },
     paramConfigs: {
       cellSize: param('Cell Size', 3, 40, 1), dotSize: param('Dot Size', 0.2, 1, 0.02),

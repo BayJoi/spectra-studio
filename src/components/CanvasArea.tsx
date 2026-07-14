@@ -1,13 +1,13 @@
 import { useRef, useState, useEffect, useMemo, useCallback } from "react";
 import { useAtomValue, useSetAtom } from "jotai";
-import { jotaiStore, filtersAtom, selectedFilterIdAtom, imageUrlAtom, exportTriggerAtom, updateFilterParamAtom, setExportingAtom, exportFormatAtom, pendingExportHandleAtom, renderScaleAtom } from "../store/atoms";
+import { jotaiStore, filtersAtom, selectedFilterIdAtom, imageUrlAtom, exportTriggerAtom, updateFilterParamAtom, setExportingAtom, exportFormatAtom, exportQualityAtom, pendingExportHandleAtom, renderScaleAtom, addToastAtom } from "../store/atoms";
 import type { FilterData } from "../store/atoms";
 import { EffectEngine } from "../gl/engine";
 import { EXPORT_FORMATS } from "../constants";
 import { ZoomControls } from "./canvas/ZoomControls";
 import type Stats from "stats-gl";
 
-export function CanvasArea({ beforeAfter }: { beforeAfter?: boolean }) {
+export function CanvasArea({ beforeAfter, nudgeRef }: { beforeAfter?: boolean; nudgeRef?: React.MutableRefObject<((delta: number) => void) | undefined> }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<EffectEngine | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -18,23 +18,33 @@ export function CanvasArea({ beforeAfter }: { beforeAfter?: boolean }) {
   const selectedFilterId = useAtomValue(selectedFilterIdAtom);
   const exportTrigger = useAtomValue(exportTriggerAtom);
   const exportFormat = useAtomValue(exportFormatAtom);
-  const pendingExportHandle = useAtomValue(pendingExportHandleAtom);
+  const exportQuality = useAtomValue(exportQualityAtom);
   const renderScale = useAtomValue(renderScaleAtom);
   const setExporting = useSetAtom(setExportingAtom);
   const updateFilterParam = useSetAtom(updateFilterParamAtom);
+  const addToast = useSetAtom(addToastAtom);
 
   const [transform, setTransform] = useState({ x: 0, y: 0, scale: 1 });
   const [glError, setGlError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [fadeIn, setFadeIn] = useState(false);
   const [smoothZoom, setSmoothZoom] = useState(false);
-  const [exported, setExported] = useState(false);
 
   const isDragging = useRef(false);
   const lastPos = useRef({ x: 0, y: 0 });
   const [draggingCenterFor, setDraggingCenterFor] = useState<string | null>(null);
   const [splitPos, setSplitPos] = useState(0.5);
   const sliderDragging = useRef(false);
+  const freeTracking = useRef(false);
+
+  const nudgeSplit = useCallback((delta: number) => {
+    setSplitPos((prev) => Math.max(0.01, Math.min(0.99, prev + delta)));
+  }, []);
+
+  useEffect(() => {
+    if (nudgeRef) nudgeRef.current = nudgeSplit;
+  }, [nudgeRef, nudgeSplit]);
 
   const zoomBy = useCallback((factor: number) => {
     setSmoothZoom(true);
@@ -76,7 +86,7 @@ export function CanvasArea({ beforeAfter }: { beforeAfter?: boolean }) {
     };
   }, []);
 
-  const kickLoopRef = useRef<() => void>(() => {});
+  const kickLoopRef = useRef<() => void>(undefined!);
 
   useEffect(() => {
     const engine = engineRef.current;
@@ -108,12 +118,16 @@ export function CanvasArea({ beforeAfter }: { beforeAfter?: boolean }) {
     let cancelled = false;
     setTransform({ x: 0, y: 0, scale: 1 });
     setReady(false);
+    setFadeIn(false);
     setLoading(true);
     setGlError(null);
     engineRef.current
       .loadImage(imageUrl)
       .then(() => {
-        if (!cancelled) setReady(true);
+        if (!cancelled) {
+          setReady(true);
+          setTimeout(() => { if (!cancelled) { setFadeIn(true); setLoading(false); } }, 100);
+        }
       })
       .catch((err) => {
         if (!cancelled) setGlError(err instanceof Error ? err.message : "Could not load that image.");
@@ -234,7 +248,7 @@ export function CanvasArea({ beforeAfter }: { beforeAfter?: boolean }) {
     const ext = fmt.ext;
     (async () => {
       try {
-        const blob = await engineRef.current!.exportBlob(jotaiStore.get(filtersAtom), mimeType);
+        const blob = await engineRef.current!.exportBlob(jotaiStore.get(filtersAtom), mimeType, exportQuality);
         if (cancelled || !blob) {
             if (!cancelled) {
               exportingRef.current = false;
@@ -249,7 +263,7 @@ export function CanvasArea({ beforeAfter }: { beforeAfter?: boolean }) {
           const writable = await handle.createWritable();
           await writable.write(blob);
           await writable.close();
-          setExported(true);
+          addToast('Exported', 'success');
         } else {
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
@@ -259,7 +273,7 @@ export function CanvasArea({ beforeAfter }: { beforeAfter?: boolean }) {
           a.click();
           document.body.removeChild(a);
           URL.revokeObjectURL(url);
-          setExported(true);
+          addToast('Exported', 'success');
         }
       } catch (err) {
         console.error('[CanvasArea] Export failed:', err);
@@ -274,12 +288,13 @@ export function CanvasArea({ beforeAfter }: { beforeAfter?: boolean }) {
       cancelled = true;
       exportingRef.current = false;
     };
-  }, [exportTrigger, ready, exportFormat, setExporting, setPendingExportHandle]);
+  }, [exportTrigger, ready, exportFormat, exportQuality, setExporting, setPendingExportHandle, addToast]);
 
   useEffect(() => {
     if (!beforeAfter) return;
+    freeTracking.current = true;
     const onMove = (e: PointerEvent) => {
-      if (!sliderDragging.current || !wrapperRef.current) return;
+      if ((!sliderDragging.current && !freeTracking.current) || !wrapperRef.current) return;
       const rect = wrapperRef.current.getBoundingClientRect();
       const x = (e.clientX - rect.left) / rect.width;
       setSplitPos(Math.max(0.01, Math.min(0.99, x)));
@@ -293,13 +308,8 @@ export function CanvasArea({ beforeAfter }: { beforeAfter?: boolean }) {
     };
   }, [beforeAfter]);
 
-  useEffect(() => {
-    if (!exported) return;
-    const t = setTimeout(() => setExported(false), 2200);
-    return () => clearTimeout(t);
-  }, [exported]);
-
   const handlePointerDown = (e: React.PointerEvent) => {
+    freeTracking.current = false;
     setSmoothZoom(false);
     const target = e.target as HTMLElement;
     if (target.dataset.filterId) {
@@ -391,7 +401,7 @@ export function CanvasArea({ beforeAfter }: { beforeAfter?: boolean }) {
             ref={canvasRef}
             width="1"
             height="1"
-            className={`max-w-[90vw] block transition-opacity duration-[450ms] ease-out ${ready && !loading ? "opacity-100" : "opacity-0"}`}
+            className={`max-w-[90vw] block transition-opacity duration-[450ms] ease-out ${fadeIn ? "opacity-100" : "opacity-0"}`}
             style={{
               maxHeight: 'calc(100vh - var(--bottom-panel-height) - var(--header-height))',
               ...(beforeAfter ? { clipPath: `inset(0 0 0 ${splitPos * 100}%)` } : {}),
@@ -413,11 +423,12 @@ export function CanvasArea({ beforeAfter }: { beforeAfter?: boolean }) {
           )}
           {beforeAfter && imageUrl && (
             <div
-              className="absolute inset-y-0 w-0.5 bg-orange-500 shadow-[0_0_8px_rgba(253,154,62,0.5)] cursor-ew-resize z-30 touch-none"
-              style={{ left: `${splitPos * 100}%` }}
-              onPointerDown={(e) => { sliderDragging.current = true; e.currentTarget.setPointerCapture(e.pointerId); e.stopPropagation(); }}
+              className="absolute inset-y-0 cursor-ew-resize z-30 touch-none"
+              style={{ left: `calc(${splitPos * 100}% - 12px)`, width: '24px' }}
+              onPointerDown={(e) => { freeTracking.current = false; sliderDragging.current = true; e.currentTarget.setPointerCapture(e.pointerId); e.stopPropagation(); }}
             >
-              <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-orange-500 shadow-[0_0_12px_rgba(253,154,62,0.35)] flex items-center justify-center cursor-ew-resize border-2 border-orange-400">
+              <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5 bg-orange-500 shadow-[0_0_8px_rgba(253,154,62,0.5)]" />
+              <div className="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-orange-500 shadow-[0_0_12px_rgba(253,154,62,0.35)] flex items-center justify-center border-2 border-orange-400">
                 <div className="w-3 h-3 rounded-full bg-white" />
               </div>
             </div>
@@ -452,13 +463,6 @@ export function CanvasArea({ beforeAfter }: { beforeAfter?: boolean }) {
           onZoomOut={zoomOut}
           onReset={resetZoom}
         />
-      )}
-
-      {exported && (
-        <div className="absolute top-4 right-4 flex items-center gap-2 bg-neutral-900/95 border border-orange-500/30 rounded-lg px-4 py-2.5 z-40 shadow-lg shadow-black/40 animate-slide-down">
-          <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
-          <p className="text-neutral-200 text-sm font-medium">Saved</p>
-        </div>
       )}
 
 

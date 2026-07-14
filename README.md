@@ -64,13 +64,18 @@ The entire application runs in the browser. There is no backend, no Electron wra
 - **Multi-pass shaders** — Bloom uses a 4-pass pipeline (brightpass, horizontal blur, vertical blur, combine)
 - **Custom presets** — Save, load, and delete your own filter combinations to `localStorage`
 - **Undo / Redo** — Full history stack (30 states) for filter additions, removals, and parameter changes
-- **Export** — Save as PNG, JPEG, or WebP. Exports always render at full resolution regardless of render scale
-- **Before / After comparison** — Split-view slider to compare original and processed images
+- **Export** — Save as PNG, JPEG, or WebP with configurable quality. Exports always render at full resolution regardless of render scale
+- **Before / After comparison** — Split-view slider with auto-track on activation and keyboard nudge
+- **Clipboard paste** — Paste images directly with `Ctrl+V`
+- **Auto-save** — Optional auto-save to restore your session after a refresh
 - **Drag-and-drop** — Drop images directly onto the editor
 - **Zoom & Pan** — Mouse wheel zoom with click-and-drag panning
 - **GPU texture capping** — Automatically downscales images exceeding GPU limits
 - **Context loss recovery** — Gracefully handles WebGL context loss and restoration
 - **Background shaders** — Landing page features 4 animated background shaders from [Radiant Shaders](https://radiant-shaders.com/)
+- **Duplicate filter** — Clone any filter with all parameters intact
+- **Randomize parameters** — Generate random values for any filter with one click
+- **Filter descriptions** — Each effect includes a description explaining what it does
 - **Zero external GPU dependencies** — Pure WebGL2, no Three.js, no Pixi.js
 
 ### Keyboard Shortcuts
@@ -79,6 +84,7 @@ The entire application runs in the browser. There is no backend, no Electron wra
 |----------|--------|
 | `Ctrl+Z` | Undo |
 | `Ctrl+Y` / `Ctrl+Shift+Z` | Redo |
+| `Ctrl+V` | Paste image from clipboard |
 | `Delete` / `Backspace` | Remove selected filter |
 | `C` | Toggle before/after comparison |
 | `D` | Toggle all effects on/off |
@@ -87,6 +93,7 @@ The entire application runs in the browser. There is no backend, no Electron wra
 | `L` | Lock/unlock selected effect |
 | `Ctrl+L` | Lock/unlock all effects |
 | `R` | Cycle render scale (25% → 50% → 100%) |
+| `Shift+←` / `Shift+→` | Nudge compare split left/right |
 | `Escape` | Close dropdown menus |
 
 ---
