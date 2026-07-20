@@ -50,29 +50,20 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const timers = new Map<Element, number>();
-    const show = (el: Element) => {
+    // Delegated scroll listener (capture phase — scroll doesn't bubble) covers all
+    // current and future .custom-scrollbar elements; no MutationObserver needed.
+    // WeakMap lets detached elements and their timers be garbage-collected.
+    const timers = new WeakMap<Element, number>();
+    const onScroll = (e: Event) => {
+      const el = e.target;
+      if (!(el instanceof Element) || !el.classList.contains('custom-scrollbar')) return;
       el.classList.add('show-scrollbar');
       const existing = timers.get(el);
       if (existing !== undefined) clearTimeout(existing);
       timers.set(el, window.setTimeout(() => el.classList.remove('show-scrollbar'), 1000));
     };
-    const attach = (el: Element) => {
-      if (el.hasAttribute('data-scrollbar-inited')) return;
-      el.setAttribute('data-scrollbar-inited', '');
-      el.addEventListener('scroll', () => show(el), { passive: true });
-    };
-    document.querySelectorAll('.custom-scrollbar').forEach(attach);
-    const obs = new MutationObserver((entries) => {
-      entries.forEach(e => e.addedNodes.forEach(n => {
-        if (n instanceof Element) {
-          if (n.matches?.('.custom-scrollbar')) attach(n);
-          n.querySelectorAll?.('.custom-scrollbar').forEach(attach);
-        }
-      }));
-    });
-    obs.observe(document.body, { childList: true, subtree: true });
-    return () => { obs.disconnect(); timers.forEach(t => window.clearTimeout(t)); };
+    document.addEventListener('scroll', onScroll, true);
+    return () => document.removeEventListener('scroll', onScroll, true);
   }, []);
 
   const launch = () => {

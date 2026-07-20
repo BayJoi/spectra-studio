@@ -16,6 +16,7 @@ const pushToPast = (get: any, set: any) => {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const toggleLockFilterAtom = atom(null, (get: any, set: any, filterId: string) => {
+  if (!get(filtersAtom).some((f: FilterData) => f.id === filterId)) return;
   pushToPast(get, set);
   set(
     filtersAtom,
@@ -25,8 +26,9 @@ export const toggleLockFilterAtom = atom(null, (get: any, set: any, filterId: st
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const batchLockFiltersAtom = atom(null, (get: any, set: any) => {
-  pushToPast(get, set);
   const filters = get(filtersAtom);
+  if (filters.length === 0) return;
+  pushToPast(get, set);
   const allLocked = filters.every((f: FilterData) => f.locked);
   set(
     filtersAtom,
@@ -70,6 +72,7 @@ export const updateFilterParamAtom = atom(
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const toggleFilterAtom = atom(null, (get: any, set: any, filterId: string) => {
+  if (!get(filtersAtom).some((f: FilterData) => f.id === filterId)) return;
   pushToPast(get, set);
   set(
     filtersAtom,
@@ -79,6 +82,7 @@ export const toggleFilterAtom = atom(null, (get: any, set: any, filterId: string
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const batchToggleFiltersAtom = atom(null, (get: any, set: any, filterIds: string[]) => {
+  if (filterIds.length === 0) return;
   pushToPast(get, set);
   const filters = get(filtersAtom);
   const allEnabled = filterIds.every((id) => {
@@ -93,6 +97,7 @@ export const batchToggleFiltersAtom = atom(null, (get: any, set: any, filterIds:
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const removeFilterAtom = atom(null, (get: any, set: any, filterId: string) => {
+  if (!get(filtersAtom).some((f: FilterData) => f.id === filterId)) return;
   pushToPast(get, set);
   const selectedId = get(selectedFilterIdAtom);
   set(
@@ -106,10 +111,10 @@ export const removeFilterAtom = atom(null, (get: any, set: any, filterId: string
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const duplicateFilterAtom = atom(null, (get: any, set: any, filterId: string) => {
-  pushToPast(get, set);
   const filters: FilterData[] = get(filtersAtom);
   const idx = filters.findIndex((f: FilterData) => f.id === filterId);
   if (idx === -1) return;
+  pushToPast(get, set);
   const src = filters[idx];
   const copy: FilterData = {
     id: uuid(),
@@ -141,20 +146,20 @@ export const resetFilterParamsAtom = atom(null, (get: any, set: any, filterId: s
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const moveFilterUpAtom = atom(null, (get: any, set: any, filterId: string) => {
-  pushToPast(get, set);
   const filters = [...get(filtersAtom)];
   const idx = filters.findIndex((f: FilterData) => f.id === filterId);
   if (idx <= 0) return;
+  pushToPast(get, set);
   [filters[idx - 1], filters[idx]] = [filters[idx], filters[idx - 1]];
   set(filtersAtom, filters);
 });
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const moveFilterDownAtom = atom(null, (get: any, set: any, filterId: string) => {
-  pushToPast(get, set);
   const filters = [...get(filtersAtom)];
   const idx = filters.findIndex((f: FilterData) => f.id === filterId);
   if (idx < 0 || idx >= filters.length - 1) return;
+  pushToPast(get, set);
   [filters[idx + 1], filters[idx]] = [filters[idx], filters[idx + 1]];
   set(filtersAtom, filters);
 });

@@ -273,7 +273,7 @@ export function LandingPage({ onLaunch }: LandingPageProps) {
 
       <section className="relative z-10 flex flex-col items-center px-5 pt-16 pb-16 ">
         <div className="text-center max-w-4xl mx-auto hero-entrance hero-delay-2">
-          <h1 className="text-[3.5rem] md:text-[6rem] lg:text-[7rem] leading-[1.1] font-display font-normal text-neutral-200">
+          <h1 className="text-[3.5rem] md:text-[6rem] lg:text-[7rem] leading-[1.1] font-display font-normal text-neutral-200 text-balance">
             Creative effects.
             <br />
             <span className="text-orange-500">Zero latency.</span>

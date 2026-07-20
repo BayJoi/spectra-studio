@@ -1,10 +1,10 @@
 import { useRef, useState, useEffect, useMemo, useCallback } from "react";
 import { useAtomValue, useSetAtom } from "jotai";
-import { jotaiStore, filtersAtom, selectedFilterIdAtom, imageUrlAtom, exportTriggerAtom, updateFilterParamAtom, setExportingAtom, exportFormatAtom, exportQualityAtom, pendingExportHandleAtom, renderScaleAtom, addToastAtom } from "../store/atoms";
+import { jotaiStore, filtersAtom, selectedFilterIdAtom, imageUrlAtom, updateFilterParamAtom, renderScaleAtom } from "../store/atoms";
 import type { FilterData } from "../store/atoms";
 import { EffectEngine } from "../gl/engine";
-import { EXPORT_FORMATS } from "../constants";
 import { ZoomControls } from "./canvas/ZoomControls";
+import { useCanvasExport } from "../hooks/useCanvasExport";
 import type Stats from "stats-gl";
 
 export function CanvasArea({ beforeAfter, nudgeRef }: { beforeAfter?: boolean; nudgeRef?: React.MutableRefObject<((delta: number) => void) | undefined> }) {
@@ -16,13 +16,8 @@ export function CanvasArea({ beforeAfter, nudgeRef }: { beforeAfter?: boolean; n
   const imageUrl = useAtomValue(imageUrlAtom);
   const filters = useAtomValue(filtersAtom);
   const selectedFilterId = useAtomValue(selectedFilterIdAtom);
-  const exportTrigger = useAtomValue(exportTriggerAtom);
-  const exportFormat = useAtomValue(exportFormatAtom);
-  const exportQuality = useAtomValue(exportQualityAtom);
   const renderScale = useAtomValue(renderScaleAtom);
-  const setExporting = useSetAtom(setExportingAtom);
   const updateFilterParam = useSetAtom(updateFilterParamAtom);
-  const addToast = useSetAtom(addToastAtom);
 
   const [transform, setTransform] = useState({ x: 0, y: 0, scale: 1 });
   const [glError, setGlError] = useState<string | null>(null);
@@ -63,12 +58,15 @@ export function CanvasArea({ beforeAfter, nudgeRef }: { beforeAfter?: boolean; n
 
   useEffect(() => {
     if (!canvasRef.current) return;
+    let statsCancelled = false;
     try {
       engineRef.current = new EffectEngine(canvasRef.current);
       if (import.meta.env.DEV) {
         import("stats-gl").then(({ default: Stats }) => {
+          if (statsCancelled || !canvasRef.current) return;
           const stats = new Stats({ trackGPU: true });
-          stats.init(canvasRef.current!).then(() => {
+          stats.init(canvasRef.current).then(() => {
+            if (statsCancelled) { stats.domElement.remove(); return; }
             statsRef.current = stats;
             containerRef.current?.appendChild(stats.domElement);
           });
@@ -79,6 +77,7 @@ export function CanvasArea({ beforeAfter, nudgeRef }: { beforeAfter?: boolean; n
       setGlError(err instanceof Error ? err.message : "Could not start WebGL2.");
     }
     return () => {
+      statsCancelled = true;
       statsRef.current?.domElement.remove();
       statsRef.current = null;
       engineRef.current?.dispose();
@@ -86,18 +85,18 @@ export function CanvasArea({ beforeAfter, nudgeRef }: { beforeAfter?: boolean; n
     };
   }, []);
 
-  const kickLoopRef = useRef<() => void>(undefined!);
+  const kickLoopRef = useRef<(() => void) | undefined>(undefined);
 
   useEffect(() => {
     const engine = engineRef.current;
     if (!engine) return;
     const onVisibility = () => {
       engine.hidden = document.hidden;
-      if (!engine.hidden) kickLoopRef.current();
+      if (!engine.hidden) kickLoopRef.current?.();
     };
     const obs = new IntersectionObserver(([e]) => {
       engine.hidden = document.hidden || !e.isIntersecting;
-      if (!engine.hidden) kickLoopRef.current();
+      if (!engine.hidden) kickLoopRef.current?.();
     }, { threshold: 0 });
     if (canvasRef.current) obs.observe(canvasRef.current);
     document.addEventListener('visibilitychange', onVisibility);
@@ -237,58 +236,7 @@ export function CanvasArea({ beforeAfter, nudgeRef }: { beforeAfter?: boolean; n
     };
   }, [ready]);
 
-  const setPendingExportHandle = useSetAtom(pendingExportHandleAtom);
-
-  useEffect(() => {
-    if (exportTrigger === 0 || !engineRef.current || !ready) return;
-    exportingRef.current = true;
-    let cancelled = false;
-    const fmt = EXPORT_FORMATS.find(f => f.value === exportFormat) ?? EXPORT_FORMATS[0];
-    const mimeType = fmt.mime;
-    const ext = fmt.ext;
-    (async () => {
-      try {
-        const blob = await engineRef.current!.exportBlob(jotaiStore.get(filtersAtom), mimeType, exportQuality);
-        if (cancelled || !blob) {
-            if (!cancelled) {
-              exportingRef.current = false;
-              setExporting(false);
-              setPendingExportHandle(null);
-            }
-            return;
-          }
-
-        const handle = jotaiStore.get(pendingExportHandleAtom);
-        if (handle) {
-          const writable = await handle.createWritable();
-          await writable.write(blob);
-          await writable.close();
-          addToast('Exported', 'success');
-        } else {
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = `spectra-export-${Date.now()}${ext}`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-          addToast('Exported', 'success');
-        }
-      } catch (err) {
-        console.error('[CanvasArea] Export failed:', err);
-      }
-      if (!cancelled) {
-        exportingRef.current = false;
-        setExporting(false);
-        setPendingExportHandle(null);
-      }
-    })();
-    return () => {
-      cancelled = true;
-      exportingRef.current = false;
-    };
-  }, [exportTrigger, ready, exportFormat, exportQuality, setExporting, setPendingExportHandle, addToast]);
+  useCanvasExport(engineRef, exportingRef, ready);
 
   useEffect(() => {
     if (!beforeAfter) return;

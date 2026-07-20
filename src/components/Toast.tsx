@@ -38,7 +38,7 @@ function ToastItem({ toast }: { toast: { id: string; message: string; type: "suc
 
   return (
     <div
-      className={`pointer-events-auto flex items-center gap-2.5 bg-neutral-900/95 border ${borders[toast.type]} rounded-lg px-4 py-2.5 shadow-xl shadow-black/40 animate-slide-down cursor-pointer`}
+      className={`pointer-events-auto flex items-center gap-2.5 bg-neutral-900/95 border ${borders[toast.type]} rounded-lg px-4 py-2.5 shadow-xl shadow-black/40 animate-slide-up cursor-pointer`}
       onClick={() => remove(toast.id)}
     >
       <div className={`${icons[toast.type]} text-16px shrink-0`} />

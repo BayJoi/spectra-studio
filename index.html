@@ -12,9 +12,8 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Spectra Studio" />
     <meta name="twitter:description" content="Spectra Studio" />
-    <!-- CSP: 'unsafe-inline' in script-src is required for Vite HMR in dev; strip it in production builds -->
+    <!-- CSP: 'unsafe-inline' in script-src is required for Vite HMR / react-refresh in dev; stripped in production builds (no inline scripts are shipped) -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; font-src 'self'; script-src 'self' 'unsafe-inline'; connect-src 'self' ws://localhost:* wss://localhost:*; worker-src 'self' blob:; form-action 'none'; base-uri 'self'; object-src 'none'">
-    <script>if (window.self !== window.top) window.top.location = window.self.location;</script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preload" href="/fonts/jetbrains-mono-latin-800.woff2" as="font" type="font/woff2" crossorigin />
     <style>

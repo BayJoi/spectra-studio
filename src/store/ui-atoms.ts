@@ -4,9 +4,7 @@ import { uuid } from "./types";
 
 export const effectBrowserOpenAtom = atom(false);
 export const presetBrowserOpenAtom = atom(false);
-export const renderScaleAtom = atom<number>(
-  Number(localStorage.getItem("spectra-render-scale")) || 1.0,
-);
+export const renderScaleAtom = atom<number>(1.0);
 
 export const autoSaveEnabledAtom = atom<boolean>(
   localStorage.getItem("spectra-autosave") === "true",

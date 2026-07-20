@@ -2,20 +2,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useAtomValue, useSetAtom } from "jotai";
 import {
   imageUrlAtom,
-  isExportingAtom,
   hasFiltersAtom,
   resetEditorAtom,
   setImageUrlAtom,
-  triggerExportAtom,
-  setExportingAtom,
   exportFormatAtom,
   exportQualityAtom,
-  pendingExportHandleAtom,
   renderScaleAtom,
   autoSaveEnabledAtom,
   addToastAtom,
-  filtersAtom,
-  jotaiStore,
 } from "../store/atoms";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { CanvasArea } from "./CanvasArea";
@@ -23,6 +17,8 @@ import { BottomPanel } from "./BottomPanel";
 import { Toast } from "./Toast";
 import { EXPORT_FORMATS, RENDER_SCALES } from "../constants";
 import { useEditorKeyboardShortcuts } from "../hooks/useEditorKeyboardShortcuts";
+import { useAutoSave } from "../hooks/useAutoSave";
+import { useExport } from "../hooks/useExport";
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 
@@ -30,18 +26,20 @@ export function EditorLayout({ onBack }: { onBack: () => void }) {
   const [dragOver, setDragOver] = useState(false);
   const [beforeAfter, setBeforeAfter] = useState(false);
   const imageUrl = useAtomValue(imageUrlAtom);
-  const isExporting = useAtomValue(isExportingAtom);
-  const setExporting = useSetAtom(setExportingAtom);
-  const triggerExport = useSetAtom(triggerExportAtom);
+  const { performExport, canExport, isExporting } = useExport();
+  useAutoSave();
   const hasFilters = useAtomValue(hasFiltersAtom);
-  useEffect(() => {
+  // Reset compare mode when all filters are removed — adjusted during render
+  // (not in an effect) to avoid cascading renders (react-hooks/set-state-in-effect)
+  const [prevHasFilters, setPrevHasFilters] = useState(hasFilters);
+  if (prevHasFilters !== hasFilters) {
+    setPrevHasFilters(hasFilters);
     if (!hasFilters && beforeAfter) setBeforeAfter(false);
-  }, [hasFilters, beforeAfter]);
+  }
   const exportFormat = useAtomValue(exportFormatAtom);
   const setExportFormat = useSetAtom(exportFormatAtom);
   const exportQuality = useAtomValue(exportQualityAtom);
   const setExportQuality = useSetAtom(exportQualityAtom);
-  const setPendingExportHandle = useSetAtom(pendingExportHandleAtom);
   const renderScale = useAtomValue(renderScaleAtom);
   const setRenderScale = useSetAtom(renderScaleAtom);
   const resetEditor = useSetAtom(resetEditorAtom);
@@ -49,13 +47,10 @@ export function EditorLayout({ onBack }: { onBack: () => void }) {
   const autoSaveEnabled = useAtomValue(autoSaveEnabledAtom);
   const setAutoSaveEnabled = useSetAtom(autoSaveEnabledAtom);
   const addToast = useSetAtom(addToastAtom);
-  const canExport = imageUrl !== null && hasFilters;
-  const exportLockRef = useRef(false);
   const onBackRef = useRef(onBack);
   const nudgeCompareRef = useRef<(delta: number) => void>(undefined);
   // eslint-disable-next-line react-hooks/refs -- intentional: keep ref fresh for event handlers
   onBackRef.current = onBack;
-  useEffect(() => { if (!isExporting) exportLockRef.current = false; }, [isExporting]);
 
   useEditorKeyboardShortcuts(setBeforeAfter, (delta) => nudgeCompareRef.current?.(delta));
 
@@ -127,55 +122,6 @@ export function EditorLayout({ onBack }: { onBack: () => void }) {
     return () => removeEventListener("beforeunload", fn);
   }, [imageUrl]);
 
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const filtersValue = useAtomValue(filtersAtom);
-  useEffect(() => {
-    if (!autoSaveEnabled) return;
-    const save = async () => {
-      try {
-        const url = jotaiStore.get(imageUrlAtom);
-        if (!url) return;
-        const res = await fetch(url);
-        const blob = await res.blob();
-        const reader = new FileReader();
-        const dataUrl = await new Promise<string>((resolve) => {
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(blob);
-        });
-        if (dataUrl.length > 4 * 1024 * 1024) return;
-        const filters = jotaiStore.get(filtersAtom);
-        sessionStorage.setItem("spectra-session", JSON.stringify({ filters, image: dataUrl }));
-      } catch { /* storage full or fetch failed — ignore */ }
-    };
-    clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(save, 800);
-    return () => clearTimeout(saveTimerRef.current);
-  }, [autoSaveEnabled, imageUrl, filtersValue]);
-
-  useEffect(() => {
-    if (!autoSaveEnabled || imageUrl) return;
-    try {
-      const raw = sessionStorage.getItem("spectra-session");
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (parsed.filters && Array.isArray(parsed.filters) && parsed.image) {
-        const byteString = atob(parsed.image.split(",")[1]);
-        const ab = new Uint8Array(byteString.length);
-        for (let i = 0; i < byteString.length; i++) ab[i] = byteString.charCodeAt(i);
-        const mime = parsed.image.match(/data:(image\/\w+);/)?.[1] ?? "image/png";
-        const file = new File([ab], "session-restore." + (mime.split("/")[1] ?? "png"), { type: mime });
-        const ok = window.confirm("Restore your previous session?");
-        if (ok) {
-          setImageUrl(file);
-          jotaiStore.set(filtersAtom, parsed.filters);
-          addToast("Session restored", "success");
-        }
-      }
-      sessionStorage.removeItem("spectra-session");
-    } catch { /* ignore */ }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);
@@ -199,60 +145,6 @@ export function EditorLayout({ onBack }: { onBack: () => void }) {
     e.preventDefault();
     setDragOver(false);
   }, []);
-
-  const performExport = useCallback(async () => {
-    if (exportLockRef.current || isExporting || !canExport) return;
-    exportLockRef.current = true;
-    setExporting(true);
-
-    const fmt = EXPORT_FORMATS.find(f => f.value === exportFormat) ?? EXPORT_FORMATS[0];
-    const ext = fmt.ext;
-    const fileName = `spectra-export-${Date.now()}${ext}`;
-
-    if ('showSaveFilePicker' in window) {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const handle = await (window as any).showSaveFilePicker({
-          suggestedName: fileName,
-          types: [{ description: `${fmt.label} Image`, accept: { 'image/*': [ext] } }],
-        });
-        setPendingExportHandle(handle);
-        triggerExport();
-        return;
-      } catch (err: unknown) {
-        if (err instanceof DOMException && err.name === 'AbortError') {
-          setExporting(false);
-          exportLockRef.current = false;
-          setPendingExportHandle(null);
-          return;
-        }
-        try {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const handle = await (window as any).showSaveFilePicker({
-            suggestedName: fileName,
-          });
-          setPendingExportHandle(handle);
-          triggerExport();
-          return;
-        } catch (err2: unknown) {
-          if (err2 instanceof DOMException && err2.name === 'AbortError') {
-            setExporting(false);
-            exportLockRef.current = false;
-            setPendingExportHandle(null);
-            return;
-          }
-          setExporting(false);
-          exportLockRef.current = false;
-          setPendingExportHandle(null);
-          return;
-        }
-      }
-    } else {
-      setPendingExportHandle(null);
-    }
-
-    triggerExport();
-  }, [canExport, isExporting, exportFormat, setExporting, setPendingExportHandle, triggerExport]);
 
   return (
     <div className="flex flex-col h-screen bg-neutral-950 text-white font-sans overflow-hidden">

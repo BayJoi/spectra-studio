@@ -226,8 +226,7 @@ src/
     filter-registry.ts            # Filter manifests (params, uniforms, categories)
 
   store/
-    atoms.ts                      # Re-exports from index.ts
-    index.ts                      # Central export barrel for all atoms
+    atoms.ts                      # Central export barrel for all atoms
     types.ts                      # FilterData, FilterType, CustomPreset, uuid
     core-atoms.ts                 # Base atoms (filters, selection, history, imageUrl)
     filter-actions.ts             # Add/remove/toggle/reorder/lock filters
@@ -240,6 +239,9 @@ src/
 
   hooks/
     useEditorKeyboardShortcuts.ts # All keyboard shortcut handlers
+    useAutoSave.ts                # Session auto-save / restore (store-level subscription)
+    useExport.ts                  # Export orchestration (save picker, concurrency guard)
+    useCanvasExport.ts            # Export execution on the WebGL engine
 
   utils/
     grain.ts                      # Film grain overlay

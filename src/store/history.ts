@@ -20,9 +20,11 @@ export const undoAtom = atom(null, (get: any, set: any) => {
 export const redoAtom = atom(null, (get: any, set: any) => {
   const future = get(futureFiltersAtom);
   if (future.length === 0) return;
-  const next = future[0];
+  // future is a stack: undo pushes the current state onto the END,
+  // so redo must pop the most recently undone state from the END too
+  const next = future[future.length - 1];
   set(pastFiltersAtom, [...get(pastFiltersAtom), get(filtersAtom)].slice(-30));
-  set(futureFiltersAtom, future.slice(1));
+  set(futureFiltersAtom, future.slice(0, -1));
   set(filtersAtom, next);
   const selectedId = get(selectedFilterIdAtom);
   if (selectedId && !next.some((f: FilterData) => f.id === selectedId)) {
