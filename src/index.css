@@ -1,4 +1,6 @@
 @import "@fontsource/instrument-serif/latin-400.css";
+@import "@fontsource/jetbrains-mono/latin-400.css";
+@import "@fontsource/jetbrains-mono/latin-500.css";
 @import "@fontsource/jetbrains-mono/latin-800.css";
 
 :root {
@@ -69,6 +71,11 @@ h1, h2, h3, h4, h5, h6, p {
     height: 100%;
     overflow: hidden;
     -webkit-tap-highlight-color: transparent;
+    /* Dark UI: tells the UA to render native controls (scrollbars, form
+       controls) with a dark palette in both Chromium and Firefox */
+    color-scheme: dark;
+    /* Removes the 300ms double-tap zoom delay on buttons/links (touch) */
+    touch-action: manipulation;
   }
 
   ::selection {

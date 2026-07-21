@@ -3,15 +3,23 @@ import { presetIcons } from "@unocss/preset-icons";
 
 export default defineConfig({
   presets: [presetUno(), presetIcons({ scale: 1 })],
+  shortcuts: {
+    // Explicit transition properties (replaces `transition-all`) so only the
+    // intended, compositor-friendly properties animate.
+    "transition-interactive":
+      "transition-[color,background-color,border-color,transform,box-shadow,opacity]",
+  },
   safelist: [
     "bg-gradient-to-br",
     "i-lucide-alert-circle",
     "i-lucide-alert-triangle",
     "i-lucide-arrow-right",
+    "i-lucide-check",
     "i-lucide-check-circle",
     "i-lucide-chevron-down",
     "i-lucide-chevron-left",
     "i-lucide-chevron-right",
+    "i-lucide-chevron-up",
     "i-lucide-copy",
     "i-lucide-dices",
     "i-lucide-eye",
@@ -20,6 +28,7 @@ export default defineConfig({
     "i-lucide-grip-vertical",
     "i-lucide-image",
     "i-lucide-image-off",
+    "i-lucide-image-plus",
     "i-lucide-info",
     "i-lucide-keyboard",
     "i-lucide-layers",
@@ -30,12 +39,15 @@ export default defineConfig({
     "i-lucide-plus",
     "i-lucide-power",
     "i-lucide-power-off",
+    "i-lucide-redo-2",
+    "i-lucide-repeat",
     "i-lucide-rotate-ccw",
     "i-lucide-save",
     "i-lucide-search",
     "i-lucide-shield",
     "i-lucide-trash-2",
     "i-lucide-triangle-alert",
+    "i-lucide-undo-2",
     "i-lucide-unlock",
     "i-lucide-x",
     "i-lucide-zap",

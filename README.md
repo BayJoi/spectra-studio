@@ -290,7 +290,7 @@ Features like `KHR_parallel_shader_compile` are used when available but are not 
 
 - Tested on Windows 10 with Zen Browser (Firefox) and Brave Browser (Chromium) — other OS and browser combinations are unverified
 - Not tested on integrated graphics, older discrete GPUs, or mobile devices
-- No accessibility features (screen reader support, keyboard navigation for all controls)
+- Limited accessibility — ARIA labels, focus styles, and screen-reader announcements exist for most controls, but full keyboard navigation (e.g. moving between filter cards) is not implemented
 - No automated test suite — testing was done manually
 
 ---

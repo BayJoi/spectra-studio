@@ -16,6 +16,11 @@ import { EXPORT_FORMATS } from "../constants";
 /**
  * Watches the export trigger and performs the actual full-resolution render,
  * encode, and file write/download on the WebGL engine. Triggered by useExport.
+ *
+ * Format and quality are read imperatively from the store (not subscribed):
+ * they must NOT re-run this effect. Since the trigger stays non-zero after the
+ * first export, subscribing to them would re-export every time the user picks
+ * a format or drags the quality slider.
  */
 export function useCanvasExport(
   engineRef: React.RefObject<EffectEngine | null>,
@@ -23,8 +28,6 @@ export function useCanvasExport(
   ready: boolean,
 ) {
   const exportTrigger = useAtomValue(exportTriggerAtom);
-  const exportFormat = useAtomValue(exportFormatAtom);
-  const exportQuality = useAtomValue(exportQualityAtom);
   const setExporting = useSetAtom(setExportingAtom);
   const setPendingExportHandle = useSetAtom(pendingExportHandleAtom);
   const addToast = useSetAtom(addToastAtom);
@@ -33,6 +36,8 @@ export function useCanvasExport(
     if (exportTrigger === 0 || !engineRef.current || !ready) return;
     exportingRef.current = true;
     let cancelled = false;
+    const exportFormat = jotaiStore.get(exportFormatAtom);
+    const exportQuality = jotaiStore.get(exportQualityAtom);
     const fmt = EXPORT_FORMATS.find(f => f.value === exportFormat) ?? EXPORT_FORMATS[0];
     const mimeType = fmt.mime;
     const ext = fmt.ext;
@@ -78,5 +83,6 @@ export function useCanvasExport(
       cancelled = true;
       exportingRef.current = false;
     };
-  }, [exportTrigger, ready, exportFormat, exportQuality, setExporting, setPendingExportHandle, addToast, engineRef, exportingRef]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- engineRef/exportingRef are stable refs
+  }, [exportTrigger, ready, setExporting, setPendingExportHandle, addToast]);
 }

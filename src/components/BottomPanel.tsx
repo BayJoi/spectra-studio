@@ -13,6 +13,10 @@ import {
   setPresetBrowserOpenAtom,
   setImageUrlAtom,
   addToastAtom,
+  undoAtom,
+  redoAtom,
+  pastFiltersAtom,
+  futureFiltersAtom,
 } from "../store/atoms";
 import type { FilterData } from "../store/atoms";
 import { FilterCard } from "./filter-panel/FilterCard";
@@ -36,6 +40,10 @@ export function BottomPanel() {
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const presetRef = useRef<HTMLDivElement>(null);
+  const undo = useSetAtom(undoAtom);
+  const redo = useSetAtom(redoAtom);
+  const canUndo = useAtomValue(pastFiltersAtom).length > 0;
+  const canRedo = useAtomValue(futureFiltersAtom).length > 0;
   const dragRef = useRef<string | null>(null);
   const preDragFiltersRef = useRef<FilterData[] | null>(null);
   const filtersRef = useRef(filters);
@@ -132,8 +140,14 @@ export function BottomPanel() {
     [reorderFilters],
   );
 
+  // Newly added filters start EXPANDED so their parameters are immediately visible.
   const handleFilterAdded = useCallback((id: string) => {
-    setCollapsedIds((prev) => new Set(prev).add(id));
+    setCollapsedIds((prev) => {
+      if (!prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
   }, []);
 
   return (
@@ -141,47 +155,81 @@ export function BottomPanel() {
       <div className="flex items-center justify-between px-5 h-12 border-b border-neutral-800 shrink-0">
         <div className="flex items-center gap-3">
           <span className="text-xs font-semibold text-neutral-400 tracking-widest uppercase">Effects</span>
-          <span className="text-xs font-mono text-neutral-600">{filters.length}</span>
+          <span className="text-[11px] font-mono text-neutral-600 bg-neutral-900 border border-neutral-800 rounded px-1.5 py-0.5 min-w-6 text-center tabular-nums">{filters.length}</span>
+          <div className="flex items-center gap-0.5 ml-1">
+            <button
+              onClick={undo}
+              disabled={!canUndo}
+              aria-label="Undo (Ctrl+Z)"
+              title="Undo (Ctrl+Z)"
+              className="w-7 h-7 rounded-md flex items-center justify-center text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800 disabled:opacity-30 disabled:pointer-events-none transition-interactive duration-150 cursor-pointer"
+            >
+              <div className="i-lucide-undo-2 text-14px" />
+            </button>
+            <button
+              onClick={redo}
+              disabled={!canRedo}
+              aria-label="Redo (Ctrl+Y)"
+              title="Redo (Ctrl+Y)"
+              className="w-7 h-7 rounded-md flex items-center justify-center text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800 disabled:opacity-30 disabled:pointer-events-none transition-interactive duration-150 cursor-pointer"
+            >
+              <div className="i-lucide-redo-2 text-14px" />
+            </button>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           {filters.length > 0 && (
             <button
               onClick={() => batchToggleFilters(filters.map(f => f.id))}
-              className="px-3 py-1.5 text-xs font-medium rounded-md bg-neutral-800 border border-neutral-700 text-neutral-400 hover:text-neutral-200 hover:border-neutral-600 hover:scale-105 active:scale-95 transition-all duration-150 cursor-pointer"
+              className="px-3 py-1.5 text-xs font-medium rounded-md bg-neutral-800 border border-neutral-700 text-neutral-400 hover:text-neutral-200 hover:border-neutral-600 hover:scale-105 active:scale-95 transition-interactive duration-150 cursor-pointer"
             >
               {filters.every(f => f.enabled) ? 'All Off' : 'All On'}
             </button>
           )}
+          {/* Hidden file inputs live outside the buttons — interactive elements
+              must not nest inside other interactive elements (HTML validity +
+              inconsistent activation behavior across browsers). */}
+          <input id="image-input" type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={!!imageUrl} aria-hidden="true" tabIndex={-1} />
+          <input id="replace-input" type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={!imageUrl} aria-hidden="true" tabIndex={-1} />
           <button
             onClick={() => { if (!imageUrl) document.getElementById('image-input')?.click(); }}
             disabled={!!imageUrl}
-            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md border border-neutral-700 transition-all duration-150 hover:scale-105 active:scale-95 ${imageUrl ? "bg-neutral-900 text-neutral-500 cursor-not-allowed hover:scale-100" : "bg-neutral-900 text-neutral-400 hover:text-neutral-200 hover:border-neutral-600 cursor-pointer"}`}
+            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md border border-neutral-700 transition-interactive duration-150 hover:scale-105 active:scale-95 ${imageUrl ? "bg-neutral-900 text-neutral-500 cursor-not-allowed hover:scale-100" : "bg-neutral-900 text-neutral-400 hover:text-neutral-200 hover:border-neutral-600 cursor-pointer"}`}
           >
             <div className="i-lucide-image text-14px" />
             <span>Image</span>
-            <input id="image-input" type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={!!imageUrl} />
           </button>
           <button
             onClick={() => { if (imageUrl) document.getElementById('replace-input')?.click(); }}
             disabled={!imageUrl}
-            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md border border-neutral-700 transition-all duration-150 hover:scale-105 active:scale-95 ${!imageUrl ? "bg-neutral-800 text-neutral-500 cursor-not-allowed hover:scale-100" : "bg-neutral-800 text-neutral-400 hover:text-neutral-200 hover:border-neutral-600 cursor-pointer"}`}
+            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md border border-neutral-700 transition-interactive duration-150 hover:scale-105 active:scale-95 ${!imageUrl ? "bg-neutral-800 text-neutral-500 cursor-not-allowed hover:scale-100" : "bg-neutral-800 text-neutral-400 hover:text-neutral-200 hover:border-neutral-600 cursor-pointer"}`}
           >
-            <div className="i-lucide-image text-14px" />
+            <div className="i-lucide-repeat text-14px" />
             <span>Replace</span>
-            <input id="replace-input" type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={!imageUrl} />
           </button>
           <PresetBrowser disabled={!imageUrl && filters.length === 0} />
           <EffectBrowser onFilterAdded={handleFilterAdded} />
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar overscroll-y-contain">
         {filters.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-8">
-            <p className="text-neutral-600 text-sm">No effects yet.</p>
-            <p className="text-neutral-700 text-xs mt-1">
-              Click <strong className="text-neutral-500">+ Add Effect</strong> to start.
-            </p>
+            {imageUrl ? (
+              <>
+                <p className="text-neutral-500 text-sm">No effects yet.</p>
+                <p className="text-neutral-600 text-xs mt-1">
+                  Click <strong className="text-neutral-400">+ Add Effect</strong> to start stacking.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-neutral-500 text-sm">No image loaded.</p>
+                <p className="text-neutral-600 text-xs mt-1">
+                  Load an image first — then effects appear here.
+                </p>
+              </>
+            )}
           </div>
         ) : (
           <div className="p-3 space-y-2">
@@ -194,6 +242,7 @@ export function BottomPanel() {
                 isCollapsed={collapsedIds.has(filter.id)}
                 isDragOver={dragOverIdx === idx}
                 onToggleCollapse={toggleCollapse}
+                onExpand={handleFilterAdded}
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
                 onDragEnter={handleDragEnterCard}

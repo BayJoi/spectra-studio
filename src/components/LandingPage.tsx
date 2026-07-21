@@ -78,7 +78,7 @@ export function LandingPage({ onLaunch }: LandingPageProps) {
     <div
       key={m.type}
       title={m.description}
-      className={`reveal stagger-${(i % 3) + 1} flex items-center gap-3 border rounded-lg px-4 py-3 transition-all duration-300 group ${shaderEnabled ? 'bg-neutral-950/2 backdrop-blur-lg border-neutral-800/20 hover:border-neutral-700/40 shadow-lg shadow-black/20' : 'bg-transparent border-neutral-800/70 hover:border-neutral-700 hover:bg-neutral-900/30'}`}
+      className={`reveal stagger-${(i % 3) + 1} flex items-center gap-3 border rounded-lg px-4 py-3 transition-interactive duration-300 group ${shaderEnabled ? 'bg-neutral-950/2 backdrop-blur-lg border-neutral-800/20 hover:border-neutral-700/40 shadow-lg shadow-black/20' : 'bg-transparent border-neutral-800/70 hover:border-neutral-700 hover:bg-neutral-900/30'}`}
     >
       <div className={`w-8 h-8 rounded-md bg-gradient-to-br ${m.landingGradient ?? 'from-neutral-800/60 to-neutral-900/60'} shrink-0`} />
       <div className="min-w-0">
@@ -167,7 +167,7 @@ export function LandingPage({ onLaunch }: LandingPageProps) {
       <style>{LANDING_STYLES}</style>
 
       <nav className="relative z-10 mx-auto pt-5 px-5 max-w-6xl">
-            <div ref={navCardRef} className={`${shaderEnabled ? 'bg-neutral-950/2 backdrop-blur-lg border-neutral-800/20 shadow-xl shadow-black/30' : 'bg-transparent border-neutral-800/80'} border rounded-xl transition-all duration-300`}>
+            <div ref={navCardRef} className={`${shaderEnabled ? 'bg-neutral-950/2 backdrop-blur-lg border-neutral-800/20 shadow-xl shadow-black/30' : 'bg-transparent border-neutral-800/80'} border rounded-xl transition-interactive duration-300`}>
           <div className="flex items-center justify-between px-5 py-3.5">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-md bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-sm shadow-orange-500/15">
@@ -178,7 +178,7 @@ export function LandingPage({ onLaunch }: LandingPageProps) {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowShortcuts(true)}
-                className="flex items-center justify-center px-2.5 py-2 text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800 hover:scale-105 active:scale-95 rounded-lg transition-all duration-150 cursor-pointer"
+                className="flex items-center justify-center px-2.5 py-2 text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800 hover:scale-105 active:scale-95 rounded-lg transition-interactive duration-150 cursor-pointer"
                 title="Keyboard shortcuts"
                 aria-label="Keyboard shortcuts"
               >
@@ -201,9 +201,11 @@ export function LandingPage({ onLaunch }: LandingPageProps) {
                     }
                     setShowShaderPicker(p => !p);
                   }}
-                  className={`flex items-center gap-1.5 px-2.5 py-2 rounded-lg transition-all duration-150 cursor-pointer ${shaderEnabled ? 'text-orange-400 hover:text-orange-300 bg-neutral-800/60' : 'text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800'} hover:scale-105 active:scale-95`}
+                  className={`flex items-center gap-1.5 px-2.5 py-2 rounded-lg transition-interactive duration-150 cursor-pointer ${shaderEnabled ? 'text-orange-400 hover:text-orange-300 bg-neutral-800/60' : 'text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800'} hover:scale-105 active:scale-95`}
                   title="Background shader"
                   aria-label="Toggle background shader"
+                  aria-expanded={showShaderPicker}
+                  aria-haspopup="true"
                 >
                   {shaderEnabled ? <div className="i-lucide-eye text-14px" /> : <div className="i-lucide-eye-off text-14px" />}
                   <span className="text-xs font-mono hidden sm:inline">{shaderEnabled ? activeShader.replace(/-/g, ' ') : 'off'}</span>
@@ -214,11 +216,11 @@ export function LandingPage({ onLaunch }: LandingPageProps) {
         </div>
       </nav>
       {showShaderPicker && (
-        <div ref={dropdownRef} style={dropdownStyle} className={`${shaderEnabled ? 'bg-neutral-900/40 backdrop-blur-xl border-neutral-700 shadow-xl shadow-black/30' : 'bg-transparent border-neutral-700/70'} w-44 border rounded-xl animate-drop-in overflow-hidden transition-all duration-300`}>
+        <div ref={dropdownRef} style={dropdownStyle} className={`${shaderEnabled ? 'bg-neutral-900/40 backdrop-blur-xl border-neutral-700 shadow-xl shadow-black/30' : 'bg-transparent border-neutral-700/70'} w-44 border rounded-xl animate-drop-in overflow-hidden transition-interactive duration-300`}>
           <div className="p-2 space-y-0.5">
             <button
               onClick={() => { setActiveShader('off'); setShowShaderPicker(false); }}
-              className={`w-full text-left px-3 py-2 text-sm transition-all duration-100 cursor-pointer rounded-lg ${activeShader === 'off' ? 'bg-neutral-800 text-neutral-200' : 'text-neutral-300 hover:bg-neutral-800 hover:text-white hover:scale-[1.02] active:scale-[0.98]'}`}
+              className={`w-full text-left px-3 py-2 text-sm transition-interactive duration-100 cursor-pointer rounded-lg ${activeShader === 'off' ? 'bg-neutral-800 text-neutral-200' : 'text-neutral-300 hover:bg-neutral-800 hover:text-white hover:scale-[1.02] active:scale-[0.98]'}`}
             >
               Off
             </button>
@@ -226,7 +228,7 @@ export function LandingPage({ onLaunch }: LandingPageProps) {
               <button
                 key={s.value}
                 onClick={() => { setActiveShader(s.value); setShowShaderPicker(false); }}
-                className={`w-full text-left px-3 py-2 text-sm transition-all duration-100 cursor-pointer rounded-lg ${activeShader === s.value ? 'bg-neutral-800 text-neutral-200' : 'text-neutral-300 hover:bg-neutral-800 hover:text-white hover:scale-[1.02] active:scale-[0.98]'}`}
+                className={`w-full text-left px-3 py-2 text-sm transition-interactive duration-100 cursor-pointer rounded-lg ${activeShader === s.value ? 'bg-neutral-800 text-neutral-200' : 'text-neutral-300 hover:bg-neutral-800 hover:text-white hover:scale-[1.02] active:scale-[0.98]'}`}
               >
                 <span className="flex items-center gap-1.5">
                   {s.label}
@@ -242,6 +244,9 @@ export function LandingPage({ onLaunch }: LandingPageProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={() => setShowShortcuts(false)}>
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
           <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Keyboard shortcuts"
             className="relative z-10 bg-neutral-900 border border-neutral-800 rounded-xl p-6 w-full max-w-sm mx-4 shadow-2xl animate-drop-in"
             onClick={(e) => e.stopPropagation()}
           >
@@ -283,7 +288,7 @@ export function LandingPage({ onLaunch }: LandingPageProps) {
           </p>
           <button
             onClick={onLaunch}
-            className="mt-8 inline-flex items-center gap-2.5 bg-orange-600 text-white font-medium px-8 py-3.5 rounded-lg text-sm hover:bg-orange-500 hover:shadow-[0_0_12px_rgba(253,154,62,0.35)] hover:scale-105 active:scale-95 transition-all duration-150 cursor-pointer shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1)]"
+            className="mt-8 inline-flex items-center gap-2.5 bg-orange-600 text-white font-medium px-8 py-3.5 rounded-lg text-sm hover:bg-orange-500 hover:shadow-[0_0_12px_rgba(253,154,62,0.35)] hover:scale-105 active:scale-95 transition-interactive duration-150 cursor-pointer shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1)]"
           >
             Launch Studio
             <div className="i-lucide-arrow-right text-16px" />
@@ -296,7 +301,7 @@ export function LandingPage({ onLaunch }: LandingPageProps) {
           {FEATURES.map((f, i) => (
             <div
               key={f.title}
-              className={`reveal stagger-${i + 1} border rounded-xl px-5 py-6 transition-all duration-300 ${shaderEnabled ? 'bg-neutral-950/2 backdrop-blur-lg border-neutral-800/20 hover:border-neutral-700/40 shadow-lg shadow-black/20' : 'bg-transparent border-neutral-800/80 hover:border-neutral-700/80'}`}
+              className={`reveal stagger-${i + 1} border rounded-xl px-5 py-6 transition-interactive duration-300 ${shaderEnabled ? 'bg-neutral-950/2 backdrop-blur-lg border-neutral-800/20 hover:border-neutral-700/40 shadow-lg shadow-black/20' : 'bg-transparent border-neutral-800/80 hover:border-neutral-700/80'}`}
             >
               <div className="w-9 h-9 rounded-lg bg-neutral-900/80 border border-neutral-800/60 flex items-center justify-center mb-3.5">
                 <div className={`${f.iconClass} text-17px text-orange-500`} />
@@ -318,7 +323,7 @@ export function LandingPage({ onLaunch }: LandingPageProps) {
         </div>
       </section>
 
-      <footer className="w-full flex flex-col md:flex-row items-center justify-center gap-4 md:gap-12 text-[11px] font-mono text-neutral-600 pb-8 px-6">
+      <footer className="relative z-10 w-full flex flex-col md:flex-row items-center justify-center gap-4 md:gap-12 text-[11px] font-mono text-neutral-600 pb-8 px-6">
         <div className="text-left">
           Landing page shaders by{" "}
           <a href="https://radiant-shaders.com/" target="_blank" rel="noopener noreferrer" className="text-neutral-400 hover:text-neutral-200 hover:underline underline-offset-4 transition-colors">Radiant Shaders</a>

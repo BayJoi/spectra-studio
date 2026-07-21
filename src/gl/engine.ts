@@ -327,14 +327,21 @@ export class EffectEngine {
     let readTexture = this.sourceTexture;
     let writeTarget = this.targetA;
     let otherTarget = this.targetB;
-    let foundLast = false;
+
+    // The pipeline processes filters bottom-of-stack first (reverse array order):
+    // filters[length-1] reads the source image, and the first ENABLED filter in
+    // array order (top of stack) is processed last and must render to the screen.
+    // Precompute its index — every other filter renders into the ping-pong chain.
+    let finalEnabledIdx = -1;
+    for (let i = 0; i < filters.length; i++) {
+      if (filters[i].enabled) { finalEnabledIdx = i; break; }
+    }
 
     for (let i = filters.length - 1; i >= 0; i--) {
       const filter = filters[i];
       if (!filter.enabled) continue;
       const manifest = filterManifestByType.get(filter.type);
-      const isLast = !foundLast;
-      foundLast = true;
+      const isLast = i === finalEnabledIdx;
 
       // ASCII Beta 2 reuses the shared font atlas; build it standalone if needed.
       if (filter.type === 'AsciiBeta2' && !this.fontAtlas) {
@@ -347,7 +354,7 @@ export class EffectEngine {
             this.render(jotaiStore.get(filtersAtom));
           });
         }
-        this._drawPass(this.shaders.getProgram('passthrough'), readTexture, isLast ? finalDest : writeTarget, 'passthrough', {}, this.width, this.height, undefined, undefined, undefined, isLast ? fullRes : undefined);
+        this._drawPass(this.shaders.getProgram('passthrough'), readTexture, isLast ? finalDest : writeTarget, 'passthrough', {}, this.width, this.height, undefined, undefined, undefined, fullRes);
         if (!isLast) {
           readTexture = writeTarget.texture;
           [writeTarget, otherTarget] = [otherTarget, writeTarget];
@@ -377,7 +384,9 @@ export class EffectEngine {
           }
 
           const baseTex = isLastPass ? originalInput : undefined;
-          const passRes = isLastPass && isLast ? fullRes : undefined;
+          // All passes share the full-res coordinate space when rendering to the
+          // intermediate target, so chained effects scale consistently at <100%.
+          const passRes = fullRes;
           this._drawPass(program, passRead, passDest, passKey, filter.params, w, h, filter.id, baseTex, manifest, passRes);
 
           if (!isLastPass) {
@@ -399,7 +408,7 @@ export class EffectEngine {
         program = this.shaders.getProgram('passthrough');
         passType = 'passthrough';
       }
-      this._drawPass(program, readTexture, isLast ? finalDest : writeTarget, passType, filter.params, this.width, this.height, filter.id, undefined, manifest, isLast ? fullRes : undefined);
+      this._drawPass(program, readTexture, isLast ? finalDest : writeTarget, passType, filter.params, this.width, this.height, filter.id, undefined, manifest, fullRes);
 
       if (!isLast) {
         readTexture = writeTarget.texture;
@@ -407,11 +416,11 @@ export class EffectEngine {
       }
     }
 
-    if (!foundLast) {
+    if (finalEnabledIdx === -1) {
       this._drawPass(this.shaders.getProgram('passthrough'), this.sourceTexture, null, 'passthrough', {}, this.width, this.height);
     }
 
-    if (useIntermediate && finalDest && foundLast) {
+    if (useIntermediate && finalDest && finalEnabledIdx !== -1) {
       this._drawPass(this.shaders.getProgram('passthrough'), finalDest.texture, null, 'passthrough', {}, this.fullWidth, this.fullHeight);
     }
 

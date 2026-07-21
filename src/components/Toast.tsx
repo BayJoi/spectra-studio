@@ -5,10 +5,10 @@ import { toastsAtom, removeToastAtom } from "../store/atoms";
 export function Toast() {
   const toasts = useAtomValue(toastsAtom);
 
-  if (toasts.length === 0) return null;
-
   return (
-    <div className="fixed bottom-4 right-4 z-[100] flex flex-col-reverse gap-2 pointer-events-none">
+    // The live region stays mounted so screen readers reliably announce
+    // toasts as they are added.
+    <div className="fixed bottom-4 right-4 z-[100] flex flex-col-reverse gap-2 pointer-events-none" role="status" aria-live="polite">
       {toasts.map((t) => (
         <ToastItem key={t.id} toast={t} />
       ))}
@@ -40,6 +40,10 @@ function ToastItem({ toast }: { toast: { id: string; message: string; type: "suc
     <div
       className={`pointer-events-auto flex items-center gap-2.5 bg-neutral-900/95 border ${borders[toast.type]} rounded-lg px-4 py-2.5 shadow-xl shadow-black/40 animate-slide-up cursor-pointer`}
       onClick={() => remove(toast.id)}
+      role="button"
+      tabIndex={0}
+      title="Dismiss"
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); remove(toast.id); } }}
     >
       <div className={`${icons[toast.type]} text-16px shrink-0`} />
       <p className="text-neutral-200 text-sm">{toast.message}</p>

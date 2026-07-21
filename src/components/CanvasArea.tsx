@@ -373,6 +373,19 @@ export function CanvasArea({ beforeAfter, nudgeRef }: { beforeAfter?: boolean; n
             <div
               className="absolute inset-y-0 cursor-ew-resize z-30 touch-none"
               style={{ left: `calc(${splitPos * 100}% - 12px)`, width: '24px' }}
+              role="slider"
+              aria-label="Before/after comparison split"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.round(splitPos * 100)}
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  nudgeSplit(e.key === "ArrowLeft" ? -0.02 : 0.02);
+                }
+              }}
               onPointerDown={(e) => { freeTracking.current = false; sliderDragging.current = true; e.currentTarget.setPointerCapture(e.pointerId); e.stopPropagation(); }}
             >
               <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5 bg-orange-500 shadow-[0_0_8px_rgba(253,154,62,0.5)]" />
@@ -399,7 +412,24 @@ export function CanvasArea({ beforeAfter, nudgeRef }: { beforeAfter?: boolean; n
         <div className="absolute inset-0 flex items-center justify-center bg-neutral-950/60 z-30 animate-fade-in">
           <div className="flex flex-col items-center gap-3 bg-neutral-900 border border-neutral-800 rounded-xl px-8 py-6">
             <div className="w-[22px] h-[22px] border-2 border-neutral-800 border-t-orange-500 rounded-full animate-spectra-spin" />
-            <p className="text-neutral-600 text-xs font-mono tracking-[0.3em] uppercase">Processing</p>
+            <p className="text-neutral-600 text-xs font-mono tracking-[0.3em] uppercase">Processing…</p>
+          </div>
+        </div>
+      )}
+
+      {!imageUrl && !loading && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+          <div className="flex flex-col items-center gap-4 text-center px-6 animate-fade-in">
+            <div className="w-16 h-16 rounded-2xl bg-neutral-900/80 border border-neutral-800 border-dashed flex items-center justify-center">
+              <div className="i-lucide-image-plus text-26px text-neutral-600" />
+            </div>
+            <div>
+              <p className="text-neutral-400 text-sm font-medium">Drop an image to begin</p>
+              <p className="text-neutral-600 text-xs mt-1.5 leading-relaxed">
+                Paste from clipboard with <kbd className="px-1.5 py-0.5 bg-neutral-900 border border-neutral-800 rounded text-[10px] font-mono text-neutral-500">Ctrl+V</kbd>
+                {" "}or click <span className="text-neutral-500">Image</span> below
+              </p>
+            </div>
           </div>
         </div>
       )}

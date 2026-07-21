@@ -38,6 +38,7 @@ interface FilterCardProps {
   isCollapsed: boolean;
   isDragOver: boolean;
   onToggleCollapse: (id: string) => void;
+  onExpand: (id: string) => void;
   onDragStart: (id: string) => void;
   onDragEnd: () => void;
   onDragEnter: (idx: number) => void;
@@ -48,7 +49,7 @@ interface FilterCardProps {
 
 export const FilterCard = memo(function FilterCard({
   filter, idx, total, isCollapsed, isDragOver,
-  onToggleCollapse, onDragStart, onDragEnd, onDragEnter, onDragLeave, onDrop,
+  onToggleCollapse, onExpand, onDragStart, onDragEnd, onDragEnter, onDragLeave, onDrop,
   preDragFiltersRef,
 }: FilterCardProps) {
   const selectedId = useAtomValue(selectedFilterIdAtom);
@@ -78,7 +79,7 @@ export const FilterCard = memo(function FilterCard({
 
   return (
     <div
-      className={`group rounded-xl border transition-all duration-150 ${isSelected ? "border-neutral-700 bg-neutral-900" : isDragOver ? "border-orange-500 bg-neutral-900" : "border-neutral-800 bg-neutral-900/60 hover:border-neutral-700"}`}
+      className={`group rounded-xl border transition-interactive duration-150 ${isSelected ? "border-neutral-600 bg-neutral-900 shadow-[inset_2px_0_0_0_var(--color-orange-500)]" : isDragOver ? "border-orange-500 bg-neutral-900" : "border-neutral-800 bg-neutral-900/60 hover:border-neutral-700"}`}
       onDragOver={(e) => { e.preventDefault(); }}
       onDrop={(e) => onDrop(e, idx)}
       onDragEnter={() => onDragEnter(idx)}
@@ -115,35 +116,48 @@ export const FilterCard = memo(function FilterCard({
         <span className="text-[10px] font-mono text-neutral-600 tracking-wide hidden sm:inline mr-1">{manifest.category}</span>
         <button
           onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); onToggleCollapse(filter.id); }}
-          className="w-7 h-7 rounded-md flex items-center justify-center transition-all duration-150 cursor-pointer hover:scale-105 active:scale-95 text-neutral-600 hover:text-neutral-400 hover:bg-neutral-800"
+          aria-label={isCollapsedCard ? `Expand ${manifest.label}` : `Collapse ${manifest.label}`}
+          aria-expanded={!isCollapsedCard}
+          title={isCollapsedCard ? "Expand" : "Collapse"}
+          className="w-7 h-7 rounded-md flex items-center justify-center transition-interactive duration-150 cursor-pointer hover:scale-105 active:scale-95 text-neutral-600 hover:text-neutral-400 hover:bg-neutral-800"
         >
           <div className={`i-lucide-chevron-right text-14px transition-transform duration-200 ${!isCollapsedCard ? 'rotate-90' : ''}`} />
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); toggleFilter(filter.id); }}
           onMouseDown={(e) => e.stopPropagation()}
-          className={`w-7 h-7 rounded-md flex items-center justify-center transition-all duration-150 cursor-pointer hover:scale-105 active:scale-95 ${filter.enabled ? "text-orange-500 hover:bg-orange-500/10" : "text-neutral-700 hover:bg-neutral-800"}`}
+          aria-label={filter.enabled ? `Disable ${manifest.label}` : `Enable ${manifest.label}`}
+          aria-pressed={filter.enabled}
+          title={filter.enabled ? "Disable effect" : "Enable effect"}
+          className={`w-7 h-7 rounded-md flex items-center justify-center transition-interactive duration-150 cursor-pointer hover:scale-105 active:scale-95 ${filter.enabled ? "text-orange-500 hover:bg-orange-500/10" : "text-neutral-700 hover:bg-neutral-800"}`}
         >
           {filter.enabled ? <div className="i-lucide-power text-14px" /> : <div className="i-lucide-power-off text-14px" />}
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); toggleLock(filter.id); }}
           onMouseDown={(e) => e.stopPropagation()}
-          className={`w-7 h-7 rounded-md flex items-center justify-center transition-all duration-150 cursor-pointer hover:scale-105 active:scale-95 ${filter.locked ? "text-orange-500 hover:bg-orange-500/10" : "text-neutral-600 hover:text-neutral-400 hover:bg-neutral-800 opacity-40 group-hover:opacity-100"}`}
+          aria-label={filter.locked ? `Unlock ${manifest.label}` : `Lock ${manifest.label}`}
+          aria-pressed={filter.locked}
+          title={filter.locked ? "Unlock parameters" : "Lock parameters"}
+          className={`w-7 h-7 rounded-md flex items-center justify-center transition-interactive duration-150 cursor-pointer hover:scale-105 active:scale-95 ${filter.locked ? "text-orange-500 hover:bg-orange-500/10" : "text-neutral-600 hover:text-neutral-400 hover:bg-neutral-800 opacity-40 group-hover:opacity-100"}`}
         >
           {filter.locked ? <div className="i-lucide-lock text-13px" /> : <div className="i-lucide-unlock text-13px" />}
         </button>
         <button
-          onClick={(e) => { e.stopPropagation(); duplicateFilter(filter.id); const newId = jotaiStore.get(selectedFilterIdAtom); if (newId) onToggleCollapse(newId); addToast('Filter duplicated', 'success'); }}
+          onClick={(e) => { e.stopPropagation(); duplicateFilter(filter.id); const newId = jotaiStore.get(selectedFilterIdAtom); if (newId) onExpand(newId); addToast('Filter duplicated', 'success'); }}
           onMouseDown={(e) => e.stopPropagation()}
-          className="w-7 h-7 rounded-md flex items-center justify-center text-neutral-600 hover:text-neutral-400 hover:bg-neutral-800 hover:scale-105 active:scale-95 transition-all duration-150 opacity-40 group-hover:opacity-100 cursor-pointer"
+          aria-label={`Duplicate ${manifest.label}`}
+          title="Duplicate effect"
+          className="w-7 h-7 rounded-md flex items-center justify-center text-neutral-600 hover:text-neutral-400 hover:bg-neutral-800 hover:scale-105 active:scale-95 transition-interactive duration-150 opacity-40 group-hover:opacity-100 cursor-pointer"
         >
           <div className="i-lucide-copy text-13px" />
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); removeFilter(filter.id); }}
           onMouseDown={(e) => e.stopPropagation()}
-          className="w-7 h-7 rounded-md flex items-center justify-center text-neutral-600 hover:text-red-400 hover:bg-red-400/10 hover:scale-105 active:scale-95 transition-all duration-150 opacity-40 group-hover:opacity-100 cursor-pointer"
+          aria-label={`Delete ${manifest.label}`}
+          title="Delete effect"
+          className="w-7 h-7 rounded-md flex items-center justify-center text-neutral-600 hover:text-red-400 hover:bg-red-400/10 hover:scale-105 active:scale-95 transition-interactive duration-150 opacity-40 group-hover:opacity-100 cursor-pointer"
         >
           <div className="i-lucide-trash-2 text-14px" />
         </button>
@@ -167,7 +181,10 @@ export const FilterCard = memo(function FilterCard({
                       ref={editInputRef}
                       type="text"
                       defaultValue={displayVal}
-                      className="w-16 text-xs font-mono text-neutral-200 bg-neutral-800 border border-orange-500 rounded px-1 py-0.5 text-right focus:outline-none"
+                      autoFocus
+                      onFocus={(e) => e.target.select()}
+                      aria-label={`${config.label} value`}
+                      className="w-16 text-xs font-mono text-neutral-200 bg-neutral-800 border border-orange-500 rounded px-1 py-0.5 text-right focus:outline-none tabular-nums"
                       onKeyDown={(e) => {
                         e.stopPropagation();
                         if (e.key === 'Enter') {
@@ -197,10 +214,13 @@ export const FilterCard = memo(function FilterCard({
                       onPointerDown={(e) => e.stopPropagation()}
                     />
                   ) : (
-                    <span
-                      className="text-xs font-mono text-neutral-400 w-12 text-right cursor-pointer hover:text-neutral-200 transition-colors"
+                    <button
+                      type="button"
+                      title="Click to type a value"
+                      aria-label={`Edit ${config.label} value`}
+                      className="text-xs font-mono text-neutral-400 w-12 text-right cursor-pointer hover:text-neutral-200 transition-colors tabular-nums"
                       onClick={(e) => { e.stopPropagation(); setEditingValue({ filterId: filter.id, key }); }}
-                    >{displayVal}</span>
+                    >{displayVal}</button>
                   )}
                 </div>
                 <input
@@ -210,6 +230,7 @@ export const FilterCard = memo(function FilterCard({
                   step={isLog ? 0.001 : config.step}
                   value={isLog ? normVal : val}
                   disabled={filter.locked}
+                  aria-label={config.label}
                   onPointerDown={() => { preDragFiltersRef.current = jotaiStore.get(filtersAtom); }}
                   onPointerUp={() => {
                     if (preDragFiltersRef.current) {
@@ -240,16 +261,20 @@ export const FilterCard = memo(function FilterCard({
             <button
               onClick={(e) => { e.stopPropagation(); moveFilterUp(filter.id); }}
               disabled={idx === 0}
-              className="flex-1 py-1.5 rounded-md bg-neutral-800 text-neutral-500 text-xs hover:bg-neutral-700 hover:text-neutral-300 hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:scale-100 disabled:cursor-not-allowed transition-all duration-150 cursor-pointer"
+              aria-label={`Move ${manifest.label} up`}
+              title="Move up"
+              className="flex-1 py-1.5 rounded-md bg-neutral-800 text-neutral-500 text-xs hover:bg-neutral-700 hover:text-neutral-300 hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:scale-100 disabled:cursor-not-allowed transition-interactive duration-150 cursor-pointer flex items-center justify-center gap-1"
             >
-              ↑ Up
+              <div className="i-lucide-chevron-up text-13px" /> Up
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); moveFilterDown(filter.id); }}
               disabled={idx === total - 1}
-              className="flex-1 py-1.5 rounded-md bg-neutral-800 text-neutral-500 text-xs hover:bg-neutral-700 hover:text-neutral-300 hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:scale-100 disabled:cursor-not-allowed transition-all duration-150 cursor-pointer"
+              aria-label={`Move ${manifest.label} down`}
+              title="Move down"
+              className="flex-1 py-1.5 rounded-md bg-neutral-800 text-neutral-500 text-xs hover:bg-neutral-700 hover:text-neutral-300 hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:scale-100 disabled:cursor-not-allowed transition-interactive duration-150 cursor-pointer flex items-center justify-center gap-1"
             >
-              ↓ Down
+              <div className="i-lucide-chevron-down text-13px" /> Down
             </button>
             <button
               onClick={(e) => {
@@ -267,7 +292,7 @@ export const FilterCard = memo(function FilterCard({
                 addToast('Params randomized', 'info');
               }}
               disabled={filter.locked}
-              className="py-1.5 px-2 rounded-md bg-neutral-800 text-neutral-500 text-xs hover:bg-neutral-700 hover:text-neutral-300 hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:scale-100 disabled:cursor-not-allowed transition-all duration-150 cursor-pointer"
+              className="py-1.5 px-2 rounded-md bg-neutral-800 text-neutral-500 text-xs hover:bg-neutral-700 hover:text-neutral-300 hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:scale-100 disabled:cursor-not-allowed transition-interactive duration-150 cursor-pointer"
               title="Randomize all parameters"
             >
               <div className="i-lucide-dices text-13px" />
@@ -275,7 +300,7 @@ export const FilterCard = memo(function FilterCard({
             <button
               onClick={(e) => { e.stopPropagation(); resetFilterParams(filter.id); addToast('Filter reset', 'info'); }}
               disabled={filter.locked}
-              className="py-1.5 px-2 rounded-md bg-neutral-800 text-neutral-500 text-xs hover:bg-neutral-700 hover:text-neutral-300 hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:scale-100 disabled:cursor-not-allowed transition-all duration-150 cursor-pointer"
+              className="py-1.5 px-2 rounded-md bg-neutral-800 text-neutral-500 text-xs hover:bg-neutral-700 hover:text-neutral-300 hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:scale-100 disabled:cursor-not-allowed transition-interactive duration-150 cursor-pointer"
               title="Reset to defaults"
             >
               <div className="i-lucide-rotate-ccw text-13px" />

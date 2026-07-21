@@ -38,7 +38,7 @@ export class ErrorBoundary extends React.Component<
             ) : (
               <button
                 onClick={() => this.setState({ hasError: false, error: null, unrecoverable: false })}
-                className="px-5 py-2 text-xs font-semibold bg-orange-500 text-white hover:bg-orange-600 hover:shadow-[0_0_10px_rgba(253,154,62,0.3)] hover:scale-105 active:scale-95 transition-all duration-150 cursor-pointer rounded-md"
+                className="px-5 py-2 text-xs font-semibold bg-orange-500 text-white hover:bg-orange-600 hover:shadow-[0_0_10px_rgba(253,154,62,0.3)] hover:scale-105 active:scale-95 transition-interactive duration-150 cursor-pointer rounded-md"
               >
                 Try Again
               </button>

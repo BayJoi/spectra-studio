@@ -152,7 +152,7 @@ export function EditorLayout({ onBack }: { onBack: () => void }) {
         <div className="flex items-center gap-3">
             <button
               onClick={handleBack}
-              className="flex items-center justify-center w-10 h-10 text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800 hover:scale-105 active:scale-95 transition-all duration-150 rounded-md cursor-pointer"
+              className="flex items-center justify-center w-10 h-10 text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800 hover:scale-105 active:scale-95 transition-interactive duration-150 rounded-md cursor-pointer"
               aria-label="Back to Home"
             >
               <div className="i-lucide-chevron-left text-22px" />
@@ -174,7 +174,7 @@ export function EditorLayout({ onBack }: { onBack: () => void }) {
               localStorage.setItem("spectra-autosave", String(next));
               addToast(next ? 'Auto-save enabled' : 'Auto-save disabled', 'info');
             }}
-            className={`flex items-center justify-center w-10 h-10 transition-all duration-150 rounded-md cursor-pointer hover:scale-105 active:scale-95 ${autoSaveEnabled ? 'text-orange-500 hover:bg-orange-500/10' : 'text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800'}`}
+            className={`flex items-center justify-center w-10 h-10 transition-interactive duration-150 rounded-md cursor-pointer hover:scale-105 active:scale-95 ${autoSaveEnabled ? 'text-orange-500 hover:bg-orange-500/10' : 'text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800'}`}
             aria-label="Toggle auto-save"
             title={autoSaveEnabled ? "Auto-save on" : "Auto-save off"}
           >
@@ -183,7 +183,7 @@ export function EditorLayout({ onBack }: { onBack: () => void }) {
           {imageUrl && hasFilters && (
             <button
               onClick={() => setBeforeAfter(v => !v)}
-              className={`px-3 py-2 text-sm rounded-md transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-2 ${beforeAfter ? 'bg-orange-600 text-white' : 'bg-neutral-800 border border-neutral-700 text-neutral-400 hover:text-neutral-200 hover:border-neutral-600'}`}
+              className={`px-3 py-2 text-sm rounded-md transition-interactive duration-150 hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-2 ${beforeAfter ? 'bg-orange-600 text-white' : 'bg-neutral-800 border border-neutral-700 text-neutral-400 hover:text-neutral-200 hover:border-neutral-600'}`}
               title="Before / After comparison"
             >
               {beforeAfter ? <div className="i-lucide-image-off text-14px" /> : <div className="i-lucide-image text-14px" />}
@@ -195,10 +195,13 @@ export function EditorLayout({ onBack }: { onBack: () => void }) {
               <button
                 onClick={() => setResOpen(v => !v)}
                 title="Canvas resolution only — exports always use full quality"
-                className="px-5 py-2 text-sm font-medium bg-neutral-800 border border-neutral-700 text-neutral-400 hover:text-neutral-200 hover:border-neutral-600 hover:scale-105 active:scale-95 transition-all duration-150 rounded-md cursor-pointer flex items-center gap-2"
+                aria-label="Render scale"
+                aria-expanded={resOpen}
+                aria-haspopup="true"
+                className="px-5 py-2 text-sm font-medium bg-neutral-800 border border-neutral-700 text-neutral-400 hover:text-neutral-200 hover:border-neutral-600 hover:scale-105 active:scale-95 transition-interactive duration-150 rounded-md cursor-pointer flex items-center gap-2"
               >
                 <div className="i-lucide-monitor text-14px" />
-                {RENDER_SCALES.find(s => s.value === renderScale)?.shortLabel ?? '100%'}
+                <span className="tabular-nums">{RENDER_SCALES.find(s => s.value === renderScale)?.shortLabel ?? '100%'}</span>
                 <div className={`i-lucide-chevron-down text-12px transition-transform duration-200 ${resOpen ? 'rotate-180' : ''}`} />
               </button>
               {resOpen && (
@@ -221,10 +224,12 @@ export function EditorLayout({ onBack }: { onBack: () => void }) {
             <button
               onClick={performExport}
               disabled={isExporting || !canExport}
-              className="px-5 py-2 text-sm font-medium bg-orange-600 text-white hover:bg-orange-500 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 disabled:hover:shadow-none transition-all duration-150 rounded-l-md cursor-pointer disabled:cursor-not-allowed flex items-center gap-2"
+              title={`Export as ${exportFormat.toUpperCase()}`}
+              className="px-5 py-2 text-sm font-medium bg-orange-600 text-white hover:bg-orange-500 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 disabled:hover:shadow-none transition-interactive duration-150 rounded-l-md cursor-pointer disabled:cursor-not-allowed flex items-center gap-2"
             >
               {isExporting ? <div className="w-[14px] h-[14px] border-[1.5px] border-white/30 border-t-white rounded-full animate-spectra-spin" /> : null}
-              {isExporting ? "Exporting" : "Export"}
+              {isExporting ? "Exporting…" : "Export"}
+              {!isExporting && <span className="text-white/60 text-[11px] font-mono uppercase tracking-wide">{exportFormat}</span>}
             </button>
             <button
               onClick={(e) => {
@@ -233,7 +238,10 @@ export function EditorLayout({ onBack }: { onBack: () => void }) {
                 setFormatOpen(v => !v);
               }}
               disabled={isExporting || !canExport}
-              className="px-2 py-2 text-sm font-medium bg-orange-600 text-white hover:bg-orange-500 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 transition-all duration-150 rounded-r-md cursor-pointer disabled:cursor-not-allowed border-l border-orange-500/30"
+              aria-label="Export format options"
+              aria-expanded={formatOpen}
+              aria-haspopup="true"
+              className="px-2 py-2 text-sm font-medium bg-orange-600 text-white hover:bg-orange-500 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 transition-interactive duration-150 rounded-r-md cursor-pointer disabled:cursor-not-allowed border-l border-orange-500/30"
             >
               <div className={`i-lucide-chevron-down text-12px transition-transform duration-200 ${formatOpen ? 'rotate-180' : ''}`} />
             </button>
@@ -251,16 +259,18 @@ export function EditorLayout({ onBack }: { onBack: () => void }) {
                       setExportFormat(fmt.value);
                       localStorage.setItem("spectra-export-format", fmt.value);
                     }}
-                    className={`w-full text-left px-3 py-2 text-xs transition-colors cursor-pointer hover:bg-neutral-800 ${fmt.value === exportFormat ? 'text-orange-400' : 'text-neutral-300 hover:text-white'}`}
+                    aria-pressed={fmt.value === exportFormat}
+                    className={`w-full text-left px-3 py-2 text-xs transition-colors cursor-pointer hover:bg-neutral-800 flex items-center justify-between ${fmt.value === exportFormat ? 'text-orange-400' : 'text-neutral-300 hover:text-white'}`}
                   >
-                    {fmt.label}
+                    <span>{fmt.label}</span>
+                    {fmt.value === exportFormat && <div className="i-lucide-check text-12px" />}
                   </button>
                 ))}
                 {exportFormat !== 'png' && (
                   <div className="px-3 py-2 border-t border-neutral-800">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-[10px] text-neutral-500">Quality</span>
-                      <span className="text-[10px] font-mono text-neutral-400">{Math.round(exportQuality * 100)}%</span>
+                      <span className="text-[10px] font-mono text-neutral-400 tabular-nums">{Math.round(exportQuality * 100)}%</span>
                     </div>
                     <input
                       type="range"
@@ -268,6 +278,7 @@ export function EditorLayout({ onBack }: { onBack: () => void }) {
                       max="100"
                       step="1"
                       value={Math.round(exportQuality * 100)}
+                      aria-label="Export quality"
                       onChange={(e) => {
                         const q = Number(e.target.value) / 100;
                         setExportQuality(q);

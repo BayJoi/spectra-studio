@@ -40,32 +40,50 @@ export function EffectBrowser({ onFilterAdded }: EffectBrowserProps) {
     [addFilter, setDropdownOpen, onFilterAdded],
   );
 
+  // First match across all categories — used for Enter-to-select in search.
+  const firstMatch = searchQuery
+    ? FILTER_MANIFESTS.find((m) => m.label.toLowerCase().includes(searchQuery.toLowerCase()))
+    : undefined;
+
   return (
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setDropdownOpen(!dropdownOpen)}
         disabled={!imageUrl}
-        className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium border border-neutral-700 bg-orange-600 text-white hover:bg-orange-500 hover:shadow-[0_0_12px_rgba(253,154,62,0.35)] hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:bg-orange-600 disabled:hover:shadow-none disabled:hover:scale-100 disabled:cursor-not-allowed transition-all duration-150 rounded-md cursor-pointer"
+        aria-expanded={dropdownOpen}
+        aria-haspopup="true"
+        title={imageUrl ? "Add an effect (E)" : "Load an image first"}
+        className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium border border-neutral-700 bg-orange-600 text-white hover:bg-orange-500 hover:shadow-[0_0_12px_rgba(253,154,62,0.35)] hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:bg-orange-600 disabled:hover:shadow-none disabled:hover:scale-100 disabled:cursor-not-allowed transition-interactive duration-150 rounded-md cursor-pointer"
       >
         <div className="i-lucide-plus text-14px" />
         Add Effect
       </button>
       {dropdownOpen && (
-        <div className="absolute bottom-full right-0 mb-6 w-64 bg-neutral-900 border border-neutral-700 rounded-xl shadow-2xl z-50 animate-drop-in overflow-hidden">
+        <div className="absolute bottom-full right-0 mb-2 w-64 bg-neutral-900 border border-neutral-700 rounded-xl shadow-2xl z-50 animate-drop-in overflow-hidden">
           <div className="p-2 pb-0">
-            <div className="flex items-center gap-2 px-2 py-1.5 bg-neutral-800 rounded-lg border border-neutral-700">
+            <div className="flex items-center gap-2 px-2 py-1.5 bg-neutral-800 rounded-lg border border-neutral-700 focus-within:border-orange-500/60 transition-colors">
               <div className="i-lucide-search text-13px text-neutral-500 shrink-0" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search effects..."
+                placeholder="Search effects…"
+                aria-label="Search effects"
+                autoComplete="off"
+                spellCheck={false}
+                autoFocus
                 className="w-full bg-transparent text-xs text-neutral-200 placeholder-neutral-500 focus:outline-none"
                 onPointerDown={(e) => e.stopPropagation()}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && firstMatch) {
+                    e.preventDefault();
+                    handleSelectFilter(firstMatch.type);
+                  }
+                }}
               />
             </div>
           </div>
-          <div className="max-h-72 overflow-y-auto custom-scrollbar p-2">
+          <div className="max-h-72 overflow-y-auto overscroll-y-contain custom-scrollbar p-2">
             {GROUPED_MANIFESTS.map(({ category, items }) => {
               const filtered = searchQuery
                 ? items.filter((m) => m.label.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -81,7 +99,7 @@ export function EffectBrowser({ onFilterAdded }: EffectBrowserProps) {
                       <button
                         key={manifest.type}
                         onClick={() => handleSelectFilter(manifest.type)}
-                        className="w-full text-left px-3 py-2 text-sm text-neutral-300 hover:bg-neutral-800 hover:text-white hover:scale-[1.02] active:scale-[0.98] transition-all duration-150 cursor-pointer rounded-lg"
+                        className="w-full text-left px-3 py-2 text-sm text-neutral-300 hover:bg-neutral-800 hover:text-white hover:scale-[1.02] active:scale-[0.98] transition-interactive duration-150 cursor-pointer rounded-lg"
                       >
                         <div>{highlightMatch(manifest.label, searchQuery)}</div>
                         <div className="text-[10px] text-neutral-600 mt-0.5 leading-tight">{manifest.description}</div>
